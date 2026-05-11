@@ -4,4 +4,7 @@ frontend/node_modules/
 backend/target/
 target/
 
+frontend/dist/
+frontend/.next/
+
 .env
