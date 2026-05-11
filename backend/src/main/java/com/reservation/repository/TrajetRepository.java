@@ -17,16 +17,9 @@ import java.util.Optional;
 @Repository
 public interface TrajetRepository extends JpaRepository<Trajet, String> {
 
-    // Version simplifiée - sans filtres texte
-    @Query("""
-        SELECT t FROM Trajet t
-        WHERE t.placesDisponibles >= :places
-        ORDER BY t.dateDepart ASC
-    """)
-    Page<Trajet> findDisponibles(
-            @Param("places") Integer places,
-            Pageable pageable
-    );
+    // Return ALL trajets, paginated
+    @Query("SELECT t FROM Trajet t ORDER BY t.dateDepart ASC")
+    Page<Trajet> findAllOrdered(Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})

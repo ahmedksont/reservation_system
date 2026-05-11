@@ -1,4 +1,4 @@
-// File: D:\Download\reservation-system\reservation-system\frontend\src\app\transport\[id]\page.tsx
+// File: D:\Download\reservation-system\reservation-system\reservation_system\frontend\src\app\transport\[id]\page.tsx
 import * as entry from '../../../../../src/app/transport/[id]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

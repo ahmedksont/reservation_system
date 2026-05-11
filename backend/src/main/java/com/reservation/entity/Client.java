@@ -1,5 +1,6 @@
 package com.reservation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,10 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "clients", indexes = {
-    @Index(name = "idx_client_email", columnList = "email", unique = true)
-})
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(
+        name = "clients",
+        indexes = {
+                @Index(
+                        name = "idx_client_email",
+                        columnList = "email",
+                        unique = true
+                )
+        }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Client {
 
     @Id
@@ -30,6 +42,7 @@ public class Client {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String motDePasse;
 
     @Column(length = 20)
@@ -47,7 +60,16 @@ public class Client {
     @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    /**
+     * Prevent infinite JSON recursion:
+     * Client -> Reservations -> Client -> Reservations ...
+     */
+    @OneToMany(
+            mappedBy = "client",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore
     @Builder.Default
     private List<Reservation> reservations = new ArrayList<>();
 
@@ -59,6 +81,7 @@ public class Client {
     private LocalDateTime updatedAt;
 
     public enum Role {
-        ADMIN, CLIENT
+        ADMIN,
+        CLIENT
     }
 }

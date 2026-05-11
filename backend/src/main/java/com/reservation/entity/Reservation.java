@@ -1,7 +1,9 @@
 package com.reservation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,15 +11,24 @@ import java.util.List;
 
 @Entity
 @Table(name = "reservations")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Reservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    /**
+     * Prevent recursion:
+     * Reservation -> Client -> Reservations -> ...
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
+    @JsonIgnore
     private Client client;
 
     @Enumerated(EnumType.STRING)
@@ -28,6 +39,7 @@ public class Reservation {
     @Builder.Default
     private StatutPaiement statutPaiement = StatutPaiement.EN_ATTENTE;
 
+    @Column(precision = 10, scale = 2)
     private BigDecimal montantTotal;
 
     @Column(name = "stripe_payment_intent_id")
@@ -36,13 +48,22 @@ public class Reservation {
     @Column(name = "stripe_client_secret")
     private String stripeClientSecret;
 
-    @Column(length = 500)  // ✅ AJOUTER CE CHAMP
+    @Column(length = 500)
     private String notes;
 
-    @Column(name = "annulee_at")  // ✅ AJOUTER CE CHAMP
+    @Column(name = "annulee_at")
     private LocalDateTime annuleeAt;
 
-    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    /**
+     * Prevent recursion:
+     * Reservation -> Lignes -> Reservation -> ...
+     */
+    @OneToMany(
+            mappedBy = "reservation",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore
     @Builder.Default
     private List<LigneReservation> lignes = new ArrayList<>();
 
@@ -55,11 +76,17 @@ public class Reservation {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     public enum StatutReservation {
-        EN_ATTENTE, CONFIRMEE, ANNULEE, TERMINEE
+        EN_ATTENTE,
+        CONFIRMEE,
+        ANNULEE,
+        TERMINEE
     }
 
     public enum StatutPaiement {
-        EN_ATTENTE, PAYE, REMBOURSE, ECHOUE
+        EN_ATTENTE,
+        PAYE,
+        REMBOURSE,
+        ECHOUE
     }
 
     public void addLigne(LigneReservation ligne) {

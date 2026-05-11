@@ -1,5 +1,6 @@
 package com.reservation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Cache;
@@ -11,13 +12,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "trajets", indexes = {
-    @Index(name = "idx_trajet_depart", columnList = "lieu_depart"),
-    @Index(name = "idx_trajet_arrivee", columnList = "lieu_arrivee"),
-    @Index(name = "idx_trajet_date", columnList = "date_depart")
-})
+@Table(
+        name = "trajets",
+        indexes = {
+                @Index(
+                        name = "idx_trajet_depart",
+                        columnList = "lieu_depart"
+                ),
+                @Index(
+                        name = "idx_trajet_arrivee",
+                        columnList = "lieu_arrivee"
+                ),
+                @Index(
+                        name = "idx_trajet_date",
+                        columnList = "date_depart"
+                )
+        }
+)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Trajet {
 
     @Id
@@ -53,15 +70,30 @@ public class Trajet {
     @Column(length = 50)
     private String numeroVehicule;
 
-    // Optimistic Locking
+    /**
+     * Optimistic Locking
+     */
     @Version
     private Long version;
 
-    @OneToMany(mappedBy = "trajet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    /**
+     * Prevent infinite JSON recursion:
+     * Trajet -> LigneReservation -> Trajet -> ...
+     */
+    @OneToMany(
+            mappedBy = "trajet",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore
     @Builder.Default
-    private List<LigneReservation> lignesReservation = new ArrayList<>();
+    private List<LigneReservation> lignesReservation =
+            new ArrayList<>();
 
     public enum TypeTransport {
-        TRAIN, BUS, AVION, BATEAU
+        TRAIN,
+        BUS,
+        AVION,
+        BATEAU
     }
 }

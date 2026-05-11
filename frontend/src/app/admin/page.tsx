@@ -26,6 +26,11 @@ import {
   Car,
   Bath,
   Check,
+  ChevronRight,
+  Bed,
+  ArrowLeft,
+  Shield,
+  AlertCircle,
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
@@ -33,7 +38,7 @@ import { adminApi } from "@/lib/api";
 import type { AdminStats, Chambre, Trajet } from "@/types";
 import toast from "react-hot-toast";
 
-// Types
+// ─── Types ─────────────────────────────────────────────────────
 interface ChambreFormData {
   numero: string;
   type: string;
@@ -56,24 +61,46 @@ interface TrajetFormData {
   numeroVehicule: string;
 }
 
-// Modal Component
-function Modal({ isOpen, onClose, title, children }: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  title: string; 
-  children: React.ReactNode 
+// ─── Color Configs ─────────────────────────────────────────────
+const TRANSPORT_COLORS: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+  BUS: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", icon: "text-amber-600" },
+  TRAIN: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: "text-emerald-600" },
+  AVION: { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", icon: "text-sky-600" },
+  BATEAU: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", icon: "text-indigo-600" },
+};
+
+const ROOM_TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
+  SIMPLE: { bg: "bg-stone-50", border: "border-stone-200", text: "text-stone-700" },
+  DOUBLE: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
+  SUITE: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700" },
+  PENTHOUSE: { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700" },
+  FAMILIALE: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700" },
+};
+
+const STATUT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  CONFIRMEE: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  EN_ATTENTE: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  ANNULEE: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+};
+
+// ─── Modal ─────────────────────────────────────────────────────
+function Modal({ isOpen, onClose, title, children }: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
 }) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
     }
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
 
@@ -85,21 +112,21 @@ function Modal({ isOpen, onClose, title, children }: {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto glass-card"
+          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white rounded-2xl border border-stone-200/80 shadow-2xl shadow-stone-900/20"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="sticky top-0 flex items-center justify-between p-6 border-b border-night-800 bg-night-950/95 backdrop-blur-sm z-10">
-            <h2 className="font-display text-2xl text-night-100">{title}</h2>
+          <div className="sticky top-0 flex items-center justify-between p-6 border-b border-stone-100 bg-white/95 backdrop-blur-sm z-10">
+            <h2 className="font-serif text-xl text-stone-900">{title}</h2>
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-lg border border-night-700 hover:border-gold-500 text-night-300 hover:text-gold-400 transition flex items-center justify-center"
+              className="w-9 h-9 rounded-xl border border-stone-200 hover:border-stone-300 text-stone-400 hover:text-stone-600 transition flex items-center justify-center active:scale-95"
             >
               <X size={18} />
             </button>
@@ -111,7 +138,7 @@ function Modal({ isOpen, onClose, title, children }: {
   );
 }
 
-// Trajets CRUD Component
+// ─── Trajets Table ─────────────────────────────────────────────
 function TrajetsTable() {
   const [trajets, setTrajets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -216,8 +243,8 @@ function TrajetsTable() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h2 className="font-display text-2xl text-night-100">Gestion des trajets</h2>
-          <p className="text-night-500 text-sm mt-1">Créer, modifier et supprimer les trajets</p>
+          <h2 className="font-serif text-2xl text-stone-900">Gestion des trajets</h2>
+          <p className="text-stone-500 text-sm mt-1">Créer, modifier et supprimer les trajets</p>
         </div>
         <button
           onClick={() => {
@@ -225,127 +252,113 @@ function TrajetsTable() {
             resetForm();
             setModalOpen(true);
           }}
-          className="btn-primary px-4 py-2 flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all hover:shadow-lg hover:shadow-stone-900/20 active:scale-[0.98]"
         >
           <Plus size={16} />
           Nouveau trajet
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-night-800 overflow-x-auto">
-        <table className="w-full min-w-[800px]">
-          <thead className="bg-night-900">
-            <tr className="text-left">
-              <th className="p-4 text-night-400 font-medium">Départ</th>
-              <th className="p-4 text-night-400 font-medium">Arrivée</th>
-              <th className="p-4 text-night-400 font-medium">Transport</th>
-              <th className="p-4 text-night-400 font-medium">Date départ</th>
-              <th className="p-4 text-night-400 font-medium">Prix</th>
-              <th className="p-4 text-night-400 font-medium">Places</th>
-              <th className="p-4 text-night-400 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {trajets.map((trajet) => (
-              <tr key={trajet.id} className="border-t border-night-800 hover:bg-night-900/40 transition">
-                <td className="p-4 text-night-100 font-medium">{trajet.lieuDepart}</td>
-                <td className="p-4 text-night-100">{trajet.lieuArrivee}</td>
-                <td className="p-4">
-                  <span className="flex items-center gap-2 text-night-300">
-                    {getTransportIcon(trajet.typeTransport)}
-                    {trajet.typeTransport}
-                  </span>
-                </td>
-                <td className="p-4 text-night-300 text-sm">
-                  {new Date(trajet.dateDepart).toLocaleString('fr-FR')}
-                </td>
-                <td className="p-4 text-gold-400 font-medium">{trajet.prixParPlace}€</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    trajet.placesDisponibles > 0 
-                      ? 'bg-green-500/20 text-green-400' 
-                      : 'bg-red-500/20 text-red-400'
-                  }`}>
-                    {trajet.placesDisponibles}/{trajet.placesTotal}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(trajet)}
-                      className="w-9 h-9 rounded-lg border border-night-700 hover:border-gold-500 text-night-300 hover:text-gold-400 transition flex items-center justify-center"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => deleteTrajet(trajet.id)}
-                      className="w-9 h-9 rounded-lg border border-night-700 hover:border-red-500 text-night-300 hover:text-red-400 transition flex items-center justify-center"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+      <div className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
+            <thead className="bg-stone-50 border-b border-stone-100">
+              <tr className="text-left">
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Départ</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Arrivée</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Transport</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Date départ</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Prix</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Places</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {trajets.map((trajet) => {
+                const colors = TRANSPORT_COLORS[trajet.typeTransport] || TRANSPORT_COLORS.BUS;
+                return (
+                  <tr key={trajet.id} className="border-t border-stone-100 hover:bg-stone-50/50 transition">
+                    <td className="p-4 text-stone-900 font-medium">{trajet.lieuDepart}</td>
+                    <td className="p-4 text-stone-700">{trajet.lieuArrivee}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-medium border ${colors.bg} ${colors.text} ${colors.border}`}>
+                        <span className={colors.icon}>{getTransportIcon(trajet.typeTransport)}</span>
+                        {trajet.typeTransport}
+                      </span>
+                    </td>
+                    <td className="p-4 text-stone-600 text-sm">
+                      {new Date(trajet.dateDepart).toLocaleString("fr-FR")}
+                    </td>
+                    <td className="p-4 text-stone-900 font-semibold tabular-nums">{Number(trajet.prixParPlace).toFixed(2)}€</td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border ${
+                        trajet.placesDisponibles > 0
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-red-50 text-red-700 border-red-200"
+                      }`}>
+                        {trajet.placesDisponibles}/{trajet.placesTotal}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEditModal(trajet)}
+                          className="w-9 h-9 rounded-xl border border-stone-200 hover:border-stone-300 text-stone-500 hover:text-stone-700 transition flex items-center justify-center active:scale-95"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => deleteTrajet(trajet.id)}
+                          className="w-9 h-9 rounded-xl border border-stone-200 hover:border-red-300 text-stone-500 hover:text-red-600 transition flex items-center justify-center active:scale-95"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {!loading && trajets.length === 0 && (
-          <div className="p-10 text-center text-night-500">Aucun trajet disponible</div>
+          <div className="p-10 text-center text-stone-500 text-sm">Aucun trajet disponible</div>
         )}
       </div>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingTrajet ? "Modifier le trajet" : "Créer un trajet"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { label: "Lieu départ *", key: "lieuDepart", type: "text", placeholder: "Paris" },
+              { label: "Lieu arrivée *", key: "lieuArrivee", type: "text", placeholder: "Lyon" },
+              { label: "Date départ *", key: "dateDepart", type: "datetime-local" },
+              { label: "Date arrivée *", key: "dateArrivee", type: "datetime-local" },
+              { label: "Prix par place (€) *", key: "prixParPlace", type: "number", min: "0", step: "0.01" },
+              { label: "Places totales *", key: "placesTotal", type: "number", min: "1" },
+              { label: "Numéro véhicule", key: "numeroVehicule", type: "text", placeholder: "AB-123-CD" },
+            ].map((field) => (
+              <div key={field.key}>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">{field.label}</label>
+                <input
+                  type={field.type}
+                  required={field.label.includes("*")}
+                  min={field.min}
+                  step={field.step}
+                  value={formData[field.key as keyof TrajetFormData]}
+                  onChange={(e) => setFormData({ ...formData, [field.key]: field.type === "number" ? parseFloat(e.target.value) : e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+                  placeholder={field.placeholder}
+                />
+              </div>
+            ))}
             <div>
-              <label className="block text-night-300 text-sm mb-2">Lieu départ *</label>
-              <input
-                type="text"
-                required
-                value={formData.lieuDepart}
-                onChange={(e) => setFormData({ ...formData, lieuDepart: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-                placeholder="Paris"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Lieu arrivée *</label>
-              <input
-                type="text"
-                required
-                value={formData.lieuArrivee}
-                onChange={(e) => setFormData({ ...formData, lieuArrivee: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-                placeholder="Lyon"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Date départ *</label>
-              <input
-                type="datetime-local"
-                required
-                value={formData.dateDepart}
-                onChange={(e) => setFormData({ ...formData, dateDepart: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Date arrivée *</label>
-              <input
-                type="datetime-local"
-                required
-                value={formData.dateArrivee}
-                onChange={(e) => setFormData({ ...formData, dateArrivee: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Type transport *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Type transport *</label>
               <select
                 required
                 value={formData.typeTransport}
                 onChange={(e) => setFormData({ ...formData, typeTransport: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               >
                 <option value="BUS">BUS</option>
                 <option value="TRAIN">TRAIN</option>
@@ -353,45 +366,19 @@ function TrajetsTable() {
                 <option value="BATEAU">BATEAU</option>
               </select>
             </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Prix par place (€) *</label>
-              <input
-                type="number"
-                required
-                min="0"
-                step="0.01"
-                value={formData.prixParPlace}
-                onChange={(e) => setFormData({ ...formData, prixParPlace: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Places totales *</label>
-              <input
-                type="number"
-                required
-                min="1"
-                value={formData.placesTotal}
-                onChange={(e) => setFormData({ ...formData, placesTotal: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="block text-night-300 text-sm mb-2">Numéro véhicule</label>
-              <input
-                type="text"
-                value={formData.numeroVehicule}
-                onChange={(e) => setFormData({ ...formData, numeroVehicule: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
-                placeholder="AB-123-CD"
-              />
-            </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="submit" className="btn-primary flex-1 py-2">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all active:scale-[0.98]"
+            >
               {editingTrajet ? "Modifier" : "Créer"}
             </button>
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-ghost flex-1 py-2">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl bg-stone-50 text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-100 transition-all active:scale-[0.98]"
+            >
               Annuler
             </button>
           </div>
@@ -401,7 +388,7 @@ function TrajetsTable() {
   );
 }
 
-// Chambres CRUD Component
+// ─── Chambres Table ────────────────────────────────────────────
 function ChambresTable() {
   const [chambres, setChambres] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -503,26 +490,15 @@ function ChambresTable() {
   };
 
   const removeEquipement = (equip: string) => {
-    setFormData({ ...formData, equipements: formData.equipements.filter(e => e !== equip) });
-  };
-
-  const getTypeBadgeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      SIMPLE: "bg-blue-500/20 text-blue-400",
-      DOUBLE: "bg-green-500/20 text-green-400",
-      SUITE: "bg-purple-500/20 text-purple-400",
-      PENTHOUSE: "bg-pink-500/20 text-pink-400",
-      FAMILIALE: "bg-orange-500/20 text-orange-400",
-    };
-    return colors[type] || "bg-gray-500/20 text-gray-400";
+    setFormData({ ...formData, equipements: formData.equipements.filter((e) => e !== equip) });
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h2 className="font-display text-2xl text-night-100">Gestion des chambres</h2>
-          <p className="text-night-500 text-sm mt-1">Créer, modifier et supprimer les chambres</p>
+          <h2 className="font-serif text-2xl text-stone-900">Gestion des chambres</h2>
+          <p className="text-stone-500 text-sm mt-1">Créer, modifier et supprimer les chambres</p>
         </div>
         <button
           onClick={() => {
@@ -530,7 +506,7 @@ function ChambresTable() {
             resetForm();
             setModalOpen(true);
           }}
-          className="btn-primary px-4 py-2 flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all hover:shadow-lg hover:shadow-stone-900/20 active:scale-[0.98]"
         >
           <Plus size={16} />
           Nouvelle chambre
@@ -538,72 +514,85 @@ function ChambresTable() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {chambres.map((chambre) => (
-          <motion.div
-            key={chambre.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-4"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="font-display text-xl text-night-100">Chambre {chambre.numero}</h3>
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-1 ${getTypeBadgeColor(chambre.type)}`}>
-                  {chambre.type}
-                </span>
+        {chambres.map((chambre) => {
+          const colors = ROOM_TYPE_COLORS[chambre.type] || ROOM_TYPE_COLORS.SIMPLE;
+          return (
+            <motion.div
+              key={chambre.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-stone-200/80 p-5 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-serif text-xl text-stone-900">Chambre {chambre.numero}</h3>
+                  <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider border mt-1 ${colors.bg} ${colors.text} ${colors.border}`}>
+                    {chambre.type}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEditModal(chambre)}
+                    className="w-8 h-8 rounded-lg border border-stone-200 hover:border-stone-300 text-stone-500 hover:text-stone-700 transition flex items-center justify-center active:scale-95"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => deleteChambre(chambre.id)}
+                    className="w-8 h-8 rounded-lg border border-stone-200 hover:border-red-300 text-stone-500 hover:text-red-600 transition flex items-center justify-center active:scale-95"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => openEditModal(chambre)}
-                  className="w-8 h-8 rounded-lg border border-night-700 hover:border-gold-500 text-night-300 hover:text-gold-400 transition flex items-center justify-center"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => deleteChambre(chambre.id)}
-                  className="w-8 h-8 rounded-lg border border-night-700 hover:border-red-500 text-night-300 hover:text-red-400 transition flex items-center justify-center"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-            <p className="text-gold-400 text-2xl font-semibold mt-2">{chambre.prixParNuit}€<span className="text-night-500 text-sm">/nuit</span></p>
-            <div className="mt-3 space-y-1 text-sm">
-              <p className="text-night-300">Capacité: {chambre.capacite} personne{chambre.capacite > 1 ? 's' : ''}</p>
-              <p className="text-night-300">Étage: {chambre.etage}</p>
-              <p className={`text-sm ${chambre.disponible ? 'text-green-400' : 'text-red-400'}`}>
-                {chambre.disponible ? '✓ Disponible' : '✗ Indisponible'}
+              <p className="font-serif text-2xl font-semibold text-stone-900 mt-2">
+                {Number(chambre.prixParNuit).toFixed(2)}€
+                <span className="text-stone-400 text-sm font-sans font-normal">/nuit</span>
               </p>
-            </div>
-          </motion.div>
-        ))}
+              <div className="mt-3 space-y-1.5 text-sm">
+                <p className="text-stone-600 flex items-center gap-1.5">
+                  <Users size={14} className="text-stone-400" />
+                  Capacité: {chambre.capacite} personne{chambre.capacite > 1 ? "s" : ""}
+                </p>
+                <p className="text-stone-600">Étage: {chambre.etage}</p>
+                <p className={`text-sm font-medium flex items-center gap-1.5 ${chambre.disponible ? "text-emerald-600" : "text-red-600"}`}>
+                  {chambre.disponible ? (
+                    <><Check size={14} /> Disponible</>
+                  ) : (
+                    <><X size={14} /> Indisponible</>
+                  )}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       {!loading && chambres.length === 0 && (
-        <div className="p-10 text-center text-night-500">Aucune chambre disponible</div>
+        <div className="p-10 text-center text-stone-500 text-sm">Aucune chambre disponible</div>
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingChambre ? "Modifier la chambre" : "Créer une chambre"}>
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-night-300 text-sm mb-2">Numéro de chambre *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Numéro de chambre *</label>
               <input
                 type="text"
                 required
                 value={formData.numero}
                 onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
                 placeholder="101"
               />
             </div>
             <div>
-              <label className="block text-night-300 text-sm mb-2">Type *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Type *</label>
               <select
                 required
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               >
                 <option value="SIMPLE">SIMPLE</option>
                 <option value="DOUBLE">DOUBLE</option>
@@ -613,7 +602,7 @@ function ChambresTable() {
               </select>
             </div>
             <div>
-              <label className="block text-night-300 text-sm mb-2">Prix par nuit (€) *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Prix par nuit (€) *</label>
               <input
                 type="number"
                 required
@@ -621,11 +610,11 @@ function ChambresTable() {
                 step="0.01"
                 value={formData.prixParNuit}
                 onChange={(e) => setFormData({ ...formData, prixParNuit: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               />
             </div>
             <div>
-              <label className="block text-night-300 text-sm mb-2">Capacité (personnes) *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Capacité (personnes) *</label>
               <input
                 type="number"
                 required
@@ -633,11 +622,11 @@ function ChambresTable() {
                 max="10"
                 value={formData.capacite}
                 onChange={(e) => setFormData({ ...formData, capacite: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               />
             </div>
             <div>
-              <label className="block text-night-300 text-sm mb-2">Étage *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Étage *</label>
               <input
                 type="number"
                 required
@@ -645,61 +634,61 @@ function ChambresTable() {
                 max="50"
                 value={formData.etage}
                 onChange={(e) => setFormData({ ...formData, etage: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               />
             </div>
             <div>
-              <label className="block text-night-300 text-sm mb-2">URL Image</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">URL Image</label>
               <input
                 type="url"
                 value={formData.imageUrl}
                 onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
                 placeholder="https://..."
               />
             </div>
           </div>
           <div>
-            <label className="block text-night-300 text-sm mb-2">Description</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+              className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               placeholder="Description de la chambre..."
             />
           </div>
           <div>
-            <label className="block text-night-300 text-sm mb-2">Équipements</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Équipements</label>
             <div className="flex gap-2 mb-3">
               <select
                 value={equipementInput}
                 onChange={(e) => setEquipementInput(e.target.value)}
-                className="flex-1 px-4 py-2 rounded-xl bg-night-900 border border-night-700 text-night-100 focus:border-gold-500 focus:outline-none transition"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
               >
                 <option value="">Sélectionner un équipement</option>
-                {availableEquipments.map(e => (
+                {availableEquipments.map((e) => (
                   <option key={e} value={e}>{e}</option>
                 ))}
               </select>
               <button
                 type="button"
                 onClick={addEquipement}
-                className="px-4 py-2 rounded-xl border border-gold-500 text-gold-400 hover:bg-gold-500/10 transition"
+                className="px-4 py-2.5 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 transition text-sm font-medium active:scale-95"
               >
                 Ajouter
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.equipements.map((equip) => (
-                <span key={equip} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-night-800 text-night-300 text-sm">
+                <span key={equip} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 text-sm">
                   {equip === "WiFi" && <Wifi size={12} />}
                   {equip === "TV" && <Tv size={12} />}
                   {equip === "Climatisation" && <Wind size={12} />}
                   {equip === "Mini-bar" && <Coffee size={12} />}
                   {equip === "Baignoire" && <Bath size={12} />}
                   {equip}
-                  <button type="button" onClick={() => removeEquipement(equip)} className="hover:text-red-400 ml-1">
+                  <button type="button" onClick={() => removeEquipement(equip)} className="hover:text-red-500 ml-0.5 transition">
                     <X size={12} />
                   </button>
                 </span>
@@ -707,10 +696,17 @@ function ChambresTable() {
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="submit" className="btn-primary flex-1 py-2">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all active:scale-[0.98]"
+            >
               {editingChambre ? "Modifier" : "Créer"}
             </button>
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-ghost flex-1 py-2">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl bg-stone-50 text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-100 transition-all active:scale-[0.98]"
+            >
               Annuler
             </button>
           </div>
@@ -720,6 +716,7 @@ function ChambresTable() {
   );
 }
 
+// ─── Stat Card ─────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color, index }: {
   icon: typeof Users;
   label: string;
@@ -733,21 +730,22 @@ function StatCard({ icon: Icon, label, value, sub, color, index }: {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.07 }}
-      className="glass-card p-6 relative overflow-hidden"
+      className="bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300 relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-5" style={{ background: color }} />
+      <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-[0.03]" style={{ background: color }} />
       <div className="flex items-start justify-between mb-4">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
-          <Icon size={20} style={{ color }} />
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-stone-50 border border-stone-200`}>
+          <Icon size={20} className="text-stone-600" />
         </div>
       </div>
-      <p className="text-night-500 text-xs uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-display text-3xl font-semibold text-night-50">{value}</p>
-      {sub && <p className="text-night-500 text-xs mt-1">{sub}</p>}
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-1">{label}</p>
+      <p className="font-serif text-3xl font-semibold text-stone-900">{value}</p>
+      {sub && <p className="text-stone-500 text-xs mt-1">{sub}</p>}
     </motion.div>
   );
 }
 
+// ─── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -769,41 +767,67 @@ export default function AdminDashboard() {
     }
   };
 
-  const statCards = stats ? [
-    { icon: Users, label: "Total clients", value: stats.totalClients.toLocaleString("fr"), sub: "+12% ce mois", color: "#FBBF24" },
-    { icon: Calendar, label: "Réservations", value: stats.totalReservations.toLocaleString("fr"), sub: `${stats.reservationsConfirmees} confirmées`, color: "#34D399" },
-    { icon: TrendingUp, label: "Revenu total", value: `${(stats.revenuTotal / 1000).toFixed(0)}K€`, sub: "depuis le début", color: "#A78BFA" },
-    { icon: Hotel, label: "Chambres libres", value: stats.chambresDisponibles, sub: "disponibles maintenant", color: "#60A5FA" },
-  ] : [];
+  const statCards = stats
+    ? [
+        { icon: Users, label: "Total clients", value: stats.totalClients.toLocaleString("fr"), sub: "+12% ce mois", color: "#78716c" },
+        { icon: Calendar, label: "Réservations", value: stats.totalReservations.toLocaleString("fr"), sub: `${stats.reservationsConfirmees} confirmées`, color: "#10b981" },
+        { icon: TrendingUp, label: "Revenu total", value: `${(stats.revenuTotal / 1000).toFixed(0)}K€`, sub: "depuis le début", color: "#f59e0b" },
+        { icon: Hotel, label: "Chambres libres", value: stats.chambresDisponibles, sub: "disponibles maintenant", color: "#3b82f6" },
+      ]
+    : [];
 
   const mois = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
   const maxRevenu = stats ? Math.max(...stats.revenusMensuels.map((r) => r.revenu)) : 1;
 
   return (
-    <div className="min-h-screen bg-night-950">
+    <div className="min-h-screen bg-[#FAFAF8] text-stone-800">
       <Navbar />
+
       <div className="pt-28 pb-16 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <p className="text-gold-500 text-sm uppercase tracking-widest mb-1">Administration</p>
-            <h1 className="font-display text-4xl font-light text-night-50">Dashboard <span className="gold-text font-semibold">Admin</span></h1>
-          </div>
-          <button onClick={fetchStats} className="btn-ghost py-2 px-4 text-sm gap-2 flex items-center">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-10 flex-wrap gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3 block">
+              Administration
+            </span>
+            <h1 className="font-serif text-4xl md:text-5xl font-light text-stone-900 leading-tight">
+              Dashboard <span className="italic text-amber-800">Admin</span>
+            </h1>
+          </motion.div>
+          <button
+            onClick={fetchStats}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-50 transition-all active:scale-[0.98]"
+          >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             Actualiser
           </button>
         </div>
 
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton h-36 rounded-2xl" />)
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-stone-200/80 h-36 animate-pulse" />
+              ))
             : statCards.map((s, i) => <StatCard key={s.label} {...s} index={i} />)}
         </div>
 
+        {/* Charts Row */}
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 glass-card p-6">
+          {/* Revenue Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2 bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
+          >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-display text-xl font-semibold text-night-100 flex items-center gap-2">
-                <BarChart3 size={18} className="text-gold-500" />
+              <h3 className="font-serif text-xl text-stone-900 flex items-center gap-2">
+                <BarChart3 size={18} className="text-amber-600" />
                 Revenus mensuels
               </h3>
             </div>
@@ -815,37 +839,43 @@ export default function AdminDashboard() {
                       initial={{ height: 0 }}
                       animate={{ height: `${(r.revenu / maxRevenu) * 100}%` }}
                       transition={{ delay: 0.4 + i * 0.05, duration: 0.5, ease: "easeOut" }}
-                      className="w-full rounded-t-lg"
-                      style={{ background: "linear-gradient(180deg, #FBBF24, #D97706)" }}
+                      className="w-full rounded-t-lg min-h-[4px]"
+                      style={{ background: "linear-gradient(180deg, #d97706, #b45309)" }}
                     />
-                    <span className="text-night-500 text-xs">{mois[r.mois - 1]}</span>
+                    <span className="text-stone-400 text-xs">{mois[r.mois - 1]}</span>
                   </div>
                 ))}
               </div>
             )}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass-card p-6">
-            <h3 className="font-display text-xl font-semibold text-night-100 mb-6">Statuts réservations</h3>
+          {/* Status Distribution */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
+          >
+            <h3 className="font-serif text-xl text-stone-900 mb-6">Statuts réservations</h3>
             {stats && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {stats.repartitionStatuts.map(({ statut, count }) => {
                   const total = stats.repartitionStatuts.reduce((a, s) => a + s.count, 0);
                   const pct = Math.round((count / total) * 100);
-                  const colors: Record<string, string> = { CONFIRMEE: "#34D399", EN_ATTENTE: "#FBBF24", ANNULEE: "#F87171" };
+                  const colors = STATUT_COLORS[statut] || STATUT_COLORS.EN_ATTENTE;
                   return (
                     <div key={statut}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-night-300">{statut}</span>
-                        <span className="text-night-400">{count} ({pct}%)</span>
+                      <div className="flex justify-between text-sm mb-1.5">
+                        <span className="text-stone-700 font-medium">{statut}</span>
+                        <span className="text-stone-500">{count} ({pct}%)</span>
                       </div>
-                      <div className="h-2 bg-night-800 rounded-full overflow-hidden">
+                      <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${pct}%` }}
                           transition={{ delay: 0.5, duration: 0.6 }}
-                          className="h-full rounded-full"
-                          style={{ background: colors[statut] || "#888" }}
+                          className={`h-full rounded-full ${colors.bg.replace("bg-", "bg-")}`}
+                          style={{ backgroundColor: statut === "CONFIRMEE" ? "#10b981" : statut === "EN_ATTENTE" ? "#f59e0b" : "#ef4444" }}
                         />
                       </div>
                     </div>
@@ -856,33 +886,50 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
-        <div className="glass-card">
-          <div className="flex border-b border-night-800/80 overflow-x-auto">
+        {/* Tabs */}
+        <div className="bg-white rounded-2xl border border-stone-200/80 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300">
+          <div className="flex border-b border-stone-100 overflow-x-auto">
             {(["overview", "trajets", "chambres", "reservations", "clients"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
                 className={`relative px-6 py-4 text-sm font-medium capitalize transition-all whitespace-nowrap ${
-                  activeTab === t ? "text-gold-400" : "text-night-400 hover:text-night-200"
+                  activeTab === t ? "text-amber-700" : "text-stone-500 hover:text-stone-700"
                 }`}
               >
-                {t === "overview" ? "Aperçu" : t === "trajets" ? "Trajets" : t === "chambres" ? "Chambres" : t === "reservations" ? "Réservations" : "Clients"}
-                {activeTab === t && <motion.div layoutId="admin-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold-400" />}
+                {t === "overview"
+                  ? "Aperçu"
+                  : t === "trajets"
+                    ? "Trajets"
+                    : t === "chambres"
+                      ? "Chambres"
+                      : t === "reservations"
+                        ? "Réservations"
+                        : "Clients"}
+                {activeTab === t && (
+                  <motion.div layoutId="admin-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-600" />
+                )}
               </button>
             ))}
           </div>
 
           <div className="p-6">
             {activeTab === "overview" && (
-              <div className="text-night-500 text-sm text-center py-8">Tableau de bord général - Sélectionnez un onglet pour gérer</div>
+              <div className="text-stone-500 text-sm text-center py-8">
+                Tableau de bord général — Sélectionnez un onglet pour gérer
+              </div>
             )}
             {activeTab === "trajets" && <TrajetsTable />}
             {activeTab === "chambres" && <ChambresTable />}
             {activeTab === "reservations" && (
-              <div className="text-night-500 text-sm text-center py-8">Gestion des réservations à venir</div>
+              <div className="text-stone-500 text-sm text-center py-8">
+                Gestion des réservations à venir
+              </div>
             )}
             {activeTab === "clients" && (
-              <div className="text-night-500 text-sm text-center py-8">Gestion des clients à venir</div>
+              <div className="text-stone-500 text-sm text-center py-8">
+                Gestion des clients à venir
+              </div>
             )}
           </div>
         </div>

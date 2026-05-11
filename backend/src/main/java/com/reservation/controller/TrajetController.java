@@ -19,17 +19,13 @@ public class TrajetController {
     private final TrajetRepository trajetRepository;
 
     /**
-     * GET /api/trajets
-     * Liste tous les trajets disponibles
+     * GET /api/trajets — returns ALL trajets, no filtering
      */
     @GetMapping
     public ResponseEntity<Page<Trajet>> getTrajets(
-            @RequestParam(defaultValue = "1") Integer places,
             @PageableDefault(size = 20, sort = "dateDepart") Pageable pageable) {
 
-        return ResponseEntity.ok(
-                trajetRepository.findDisponibles(places, pageable)
-        );
+        return ResponseEntity.ok(trajetRepository.findAllOrdered(pageable));
     }
 
     /**

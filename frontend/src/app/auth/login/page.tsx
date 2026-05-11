@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import toast from "react-hot-toast";
 
@@ -36,11 +37,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-night-950 flex items-center justify-center px-4">
-      {/* Background */}
+    <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background orbs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-8"
-          style={{ background: "radial-gradient(ellipse, #D97706 0%, transparent 70%)" }} />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full bg-amber-100/30 blur-[100px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-sky-50/40 blur-[80px]" />
       </div>
 
       <motion.div
@@ -52,87 +53,100 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #FBBF24)" }}>
-              <span className="text-night-950 font-display font-bold text-xl">L</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
+              <span className="text-white font-serif font-bold text-xl">L</span>
             </div>
-            <span className="font-display text-2xl text-night-50">LuxeStay <span className="text-gold-500">&</span> Transit</span>
+            <span className="font-serif text-2xl text-stone-900">
+              LuxeStay <span className="text-amber-600">&</span> Transit
+            </span>
           </Link>
-          <h1 className="font-display text-3xl font-light text-night-100 mb-2">
-            Bon retour <span className="gold-text font-semibold">parmi nous</span>
+          <h1 className="font-serif text-3xl font-light text-stone-900 mb-2">
+            Bon retour <span className="italic text-amber-800">parmi nous</span>
           </h1>
-          <p className="text-night-500 text-sm">Connectez-vous à votre compte</p>
+          <p className="text-stone-500 text-sm">Connectez-vous à votre compte</p>
         </div>
 
-        <div className="glass-card p-8">
+        {/* Form Card */}
+        <div className="bg-white rounded-2xl border border-stone-200/80 p-8 shadow-sm shadow-stone-900/5">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Email */}
             <div>
-              <label className="text-night-400 text-xs uppercase tracking-widest block mb-2">Email</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 block mb-2">
+                Email
+              </label>
               <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-night-500" />
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   {...register("email")}
                   type="email"
                   placeholder="vous@exemple.com"
-                  className="input-gold pl-10"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
                 />
               </div>
-              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email.message}</p>}
             </div>
 
+            {/* Password */}
             <div>
-              <label className="text-night-400 text-xs uppercase tracking-widest block mb-2">Mot de passe</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 block mb-2">
+                Mot de passe
+              </label>
               <div className="relative">
-                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-night-500" />
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   {...register("password")}
                   type={showPwd ? "text" : "password"}
                   placeholder="••••••••"
-                  className="input-gold pl-10 pr-10"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd(!showPwd)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-night-500 hover:text-night-300"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition"
                 >
                   {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password.message}</p>}
             </div>
 
+            {/* Remember / Forgot */}
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-night-400 text-sm cursor-pointer">
-                <input type="checkbox" className="accent-gold-500" />
+              <label className="flex items-center gap-2 text-stone-500 text-sm cursor-pointer">
+                <input type="checkbox" className="accent-amber-600 w-4 h-4 rounded" />
                 Se souvenir de moi
               </label>
-              <Link href="/auth/forgot-password" className="text-gold-600 hover:text-gold-400 text-sm transition-colors">
+              <Link href="/auth/forgot-password" className="text-amber-700 hover:text-amber-800 text-sm font-medium transition-colors">
                 Mot de passe oublié ?
               </Link>
             </div>
 
-            <motion.button
+            {/* Submit */}
+            <button
               type="submit"
               disabled={isSubmitting}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="btn-gold w-full justify-center py-3.5 text-sm disabled:opacity-50"
+              className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${
+                isSubmitting
+                  ? "bg-stone-100 text-stone-400 cursor-not-allowed"
+                  : "bg-stone-900 text-white hover:bg-stone-800 hover:shadow-lg hover:shadow-stone-900/20"
+              }`}
             >
               {isSubmitting ? (
-                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
               ) : (
-                <>Se connecter <ArrowRight size={16} /></>
+                <>
+                  Se connecter
+                  <ArrowRight size={16} />
+                </>
               )}
-            </motion.button>
+            </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-night-800 text-center">
-            <p className="text-night-500 text-sm">
+          {/* Footer */}
+          <div className="mt-6 pt-6 border-t border-stone-100 text-center">
+            <p className="text-stone-500 text-sm">
               Pas encore de compte ?{" "}
-              <Link href="/auth/register" className="text-gold-500 hover:text-gold-300 font-medium transition-colors">
+              <Link href="/auth/register" className="text-amber-700 hover:text-amber-800 font-medium transition-colors">
                 S&apos;inscrire gratuitement
               </Link>
             </p>
