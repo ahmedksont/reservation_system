@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Star, Quote, Bed, Loader2 } from "lucide-react";
+import { ArrowRight, Star, Quote, Bed, Loader2, Users } from "lucide-react";
 import { chambreApi } from "@/lib/api";
 import type { Chambre } from "@/types";
-import toast from "react-hot-toast";
 
 // Fallback featured rooms if API fails
 const FALLBACK_ROOMS: Chambre[] = [
   { id: "f1", numero: "301", type: "SUITE", prixParNuit: 299, description: "Suite luxueuse avec salon séparé, jacuzzi et vue panoramique", capacite: 2, disponible: true, equipements: ["WiFi", "Baignoire", "Petit-déjeuner"], etage: 3, imageUrl: "" },
   { id: "f2", numero: "402", type: "PENTHOUSE", prixParNuit: 599, description: "Penthouse exclusif avec terrasse privée sur les toits", capacite: 4, disponible: true, equipements: ["WiFi", "Baignoire", "Petit-déjeuner", "Climatisation"], etage: 4, imageUrl: "" },
-  { id: "f3", numero: "205", type: "DOUBLE", prixParNuit: 149, description: "Chambre double élégante avec lit king size et dressing", capacite: 2, disponible: true, equipements: ["WiFi", "Climatisation"], etage: 2, imageUrl: "" },
+  { id: "f3", numero: "205", type: "DOUBLE", prixParNuit: 149, description: "Chambre double élégante with lit king size and dressing", capacite: 2, disponible: true, equipements: ["WiFi", "Climatisation"], etage: 2, imageUrl: "" },
 ];
 
 const ROOM_TYPE_STYLES: Record<string, { bg: string; border: string; text: string }> = {
@@ -28,47 +27,73 @@ function RoomCard({ chambre, index }: { chambre: Chambre; index: number }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="group bg-white rounded-2xl border border-stone-200/80 overflow-hidden hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
+      transition={{ delay: index * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="group bg-white rounded-[2.5rem] border border-stone-100 overflow-hidden hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)] transition-all duration-500"
     >
-      {/* Image placeholder */}
-      <div className="aspect-[4/3] bg-gradient-to-br from-stone-100 to-stone-50 relative overflow-hidden">
+      {/* Image Container */}
+      <div className="aspect-[16/10] bg-stone-100 relative overflow-hidden">
         {chambre.imageUrl ? (
-          <img src={chambre.imageUrl} alt={`Chambre ${chambre.numero}`} className="w-full h-full object-cover" />
+          <img 
+            src={chambre.imageUrl} 
+            alt={`Chambre ${chambre.numero}`} 
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Bed size={48} className="text-stone-200" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+            <Bed size={48} className="text-stone-300" />
           </div>
         )}
-        <div className="absolute top-4 left-4">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider border ${styles.bg} ${styles.text} ${styles.border}`}>
+        
+        {/* Badges */}
+        <div className="absolute top-6 left-6 flex flex-col gap-2">
+          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border backdrop-blur-md shadow-sm ${styles.bg}/80 ${styles.text} ${styles.border}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${styles.text.replace('text', 'bg')}`} />
             {chambre.type}
           </span>
         </div>
+        
+        {/* Price Tag Overlay */}
+        <div className="absolute bottom-6 right-6 px-5 py-2 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white font-serif text-lg">
+          {Number(chambre.prixParNuit).toFixed(0)}€ <span className="text-[10px] opacity-60 uppercase tracking-widest">/ nuit</span>
+        </div>
       </div>
 
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-serif text-lg text-stone-900">Chambre {chambre.numero}</h3>
-          <span className="font-serif text-xl font-semibold text-amber-700">
-            {Number(chambre.prixParNuit).toFixed(0)}€
-          </span>
-        </div>
-        <p className="text-stone-500 text-sm mb-4 line-clamp-2">{chambre.description}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-stone-400 text-xs">
-            <span>{chambre.capacite} pers.</span>
-            <span>·</span>
-            <span>Étage {chambre.etage}</span>
+      <div className="p-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={10} className="text-amber-500 fill-amber-500" />
+            ))}
           </div>
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">5.0 Exceptionnel</span>
+        </div>
+        
+        <h3 className="font-serif text-2xl text-stone-900 mb-4 group-hover:text-amber-800 transition-colors">
+          Chambre {chambre.numero}
+        </h3>
+        
+        <p className="text-stone-500 text-base leading-relaxed mb-8 line-clamp-2 font-light">
+          {chambre.description}
+        </p>
+        
+        <div className="flex items-center justify-between pt-6 border-t border-stone-50">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-stone-400">
+              <Users size={16} />
+              <span className="text-xs font-medium">{chambre.capacite}</span>
+            </div>
+            <div className="w-px h-4 bg-stone-100" />
+            <span className="text-xs font-medium text-stone-400 uppercase tracking-widest">Étage {chambre.etage}</span>
+          </div>
+          
           <Link
             href={`/rooms/${chambre.id}`}
-            className="inline-flex items-center gap-1 text-sm font-medium text-stone-700 hover:text-amber-700 transition-colors"
+            className="w-12 h-12 rounded-full border border-stone-200 flex items-center justify-center text-stone-900 hover:bg-amber-800 hover:border-amber-800 hover:text-white transition-all duration-300"
           >
-            Voir <ArrowRight size={14} />
+            <ArrowRight size={20} />
           </Link>
         </div>
       </div>
@@ -80,25 +105,28 @@ export default function FeaturedRooms() {
   const [rooms, setRooms] = useState<Chambre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const sectionRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+
+  const titleY = useTransform(scrollYProgress, [0, 1], [-50, 50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         setLoading(true);
         setError(false);
-
-        // Fetch rooms from API - using getDisponibles with params
         const { data } = await chambreApi.getDisponibles({ page: 0, size: 6 });
-
         const fetchedRooms = data?.content || data || [];
-
         if (fetchedRooms.length > 0) {
-          // Sort by price descending and take top 3
           const featured = fetchedRooms
             .filter((r: Chambre) => r.disponible)
             .sort((a: Chambre, b: Chambre) => b.prixParNuit - a.prixParNuit)
             .slice(0, 3);
-
           setRooms(featured.length > 0 ? featured : FALLBACK_ROOMS);
         } else {
           setRooms(FALLBACK_ROOMS);
@@ -111,164 +139,70 @@ export default function FeaturedRooms() {
         setLoading(false);
       }
     };
-
     fetchRooms();
   }, []);
 
   return (
-    <section className="relative z-10 py-20 px-4 max-w-7xl mx-auto">
-      <div className="flex items-end justify-between mb-12">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-2 block">
-            Notre sélection
-          </span>
-          <h2 className="font-serif text-4xl md:text-5xl font-light text-stone-900 leading-tight">
-            Chambres <span className="italic text-amber-800">vedettes</span>
-          </h2>
-        </div>
-        <Link
-          href="/rooms"
-          className="hidden md:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-all text-sm font-medium border border-transparent hover:border-stone-200"
-        >
-          Tout voir <ArrowRight size={15} />
-        </Link>
+    <section ref={sectionRef} className="relative z-10 py-48 px-4 bg-white overflow-hidden">
+      {/* Decorative background number */}
+      <div className="absolute top-20 right-0 text-[30rem] font-serif font-black text-stone-50 leading-none select-none pointer-events-none translate-x-1/2">
+        01
       </div>
 
-      {loading ? (
-        <div className="grid md:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-stone-200/80 overflow-hidden animate-pulse">
-              <div className="aspect-[4/3] bg-stone-200" />
-              <div className="p-5 space-y-3">
-                <div className="h-5 bg-stone-200 rounded w-2/3" />
-                <div className="h-4 bg-stone-200 rounded w-full" />
-                <div className="h-4 bg-stone-200 rounded w-1/2" />
-              </div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        <motion.div 
+          style={{ y: titleY, opacity }}
+          className="flex flex-col md:flex-row items-start md:items-end justify-between mb-32 gap-8"
+        >
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[1px] w-12 bg-amber-800" />
+              <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-800">
+                L&apos;Excellence Hôtelière
+              </span>
             </div>
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid md:grid-cols-3 gap-6">
+            <h2 className="font-serif text-5xl md:text-8xl font-light text-stone-900 leading-tight">
+              Notre sélection <span className="italic text-amber-800">exclusive</span>
+            </h2>
+          </div>
+          
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Link
+              href="/rooms"
+              className="group inline-flex items-center gap-4 px-10 py-5 rounded-full bg-stone-900 text-white hover:bg-amber-800 transition-all duration-500 shadow-2xl shadow-stone-900/20"
+            >
+              <span className="text-sm font-bold uppercase tracking-widest">Tout Explorer</span>
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-amber-800 transition-colors">
+                <ArrowRight size={16} />
+              </div>
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {loading ? (
+          <div className="grid md:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-[2.5rem] border border-stone-100 overflow-hidden animate-pulse">
+                <div className="aspect-[16/10] bg-stone-100" />
+                <div className="p-8 space-y-4">
+                  <div className="h-6 bg-stone-100 rounded w-2/3" />
+                  <div className="h-4 bg-stone-100 rounded w-full" />
+                  <div className="h-4 bg-stone-100 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
             {rooms.map((room, i) => (
               <RoomCard key={room.id} chambre={room} index={i} />
             ))}
           </div>
-          {error && (
-            <p className="text-center text-stone-400 text-sm mt-4">
-              Affichage des chambres de démonstration
-            </p>
-          )}
-        </>
-      )}
-
-      <div className="mt-8 text-center md:hidden">
-        <Link
-          href="/rooms"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100 transition-all text-sm font-medium"
-        >
-          Voir toutes les chambres <ArrowRight size={15} />
-        </Link>
+        )}
       </div>
     </section>
-  );
-}
-
-// --- Testimonials (static, no API needed) ---
-const TESTIMONIALS = [
-  { name: "Sophie M.", role: "Voyageuse premium", rating: 5, text: "Expérience incroyable. La réservation s'est faite en quelques secondes et la chambre était exactement comme décrite. Je recommande vivement !" },
-  { name: "Alexandre D.", role: "Directeur commercial", rating: 5, text: "Service irréprochable. Le paiement Stripe est rassurant et j'ai reçu ma confirmation immédiatement. Parfait pour les voyages d'affaires." },
-  { name: "Inès K.", role: "Blogueuse voyage", rating: 5, text: "Interface magnifique et intuitive. On sent que l'équipe a mis du cœur dans la conception. Le meilleur site de réservation que j'ai utilisé." },
-];
-
-export function TestimonialsSection() {
-  return (
-    <section className="relative z-10 py-20 px-4 max-w-7xl mx-auto">
-      <div className="text-center mb-14">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-2 block">
-          Avis clients
-        </span>
-        <h2 className="font-serif text-4xl md:text-5xl font-light text-stone-900 leading-tight">
-          Ils nous font <span className="italic text-amber-800">confiance</span>
-        </h2>
-      </div>
-      <div className="grid md:grid-cols-3 gap-6">
-        {TESTIMONIALS.map((t, i) => (
-          <motion.div
-            key={t.name}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white rounded-2xl border border-stone-200/80 p-7 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
-          >
-            <Quote size={24} className="text-amber-300 mb-4" />
-            <p className="text-stone-600 text-sm leading-relaxed mb-6 italic">{t.text}</p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
-                <span className="font-serif text-amber-700 font-semibold text-sm">{t.name[0]}</span>
-              </div>
-              <div>
-                <p className="text-stone-900 text-sm font-medium">{t.name}</p>
-                <p className="text-stone-500 text-xs">{t.role}</p>
-              </div>
-              <div className="ml-auto flex gap-0.5">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <Star key={j} size={13} className="text-amber-500 fill-amber-500" />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// --- Footer ---
-export function Footer() {
-  return (
-    <footer className="relative z-10 border-t border-stone-200/60 py-16 px-4 bg-white">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10 mb-10">
-        <div className="md:col-span-1">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-amber-500 to-amber-600">
-              <span className="text-white font-serif font-bold">L</span>
-            </div>
-            <span className="font-serif text-lg text-stone-900">LuxeStay</span>
-          </div>
-          <p className="text-stone-500 text-sm leading-relaxed">
-            Votre partenaire de voyage premium. Hôtels et transports de luxe, réservés en un instant.
-          </p>
-        </div>
-        {[
-          { title: "Services", links: ["Hôtels", "Transports", "Forfaits", "Business"] },
-          { title: "Aide", links: ["FAQ", "Annulations", "Contact", "Politique de confidentialité"] },
-          { title: "Légal", links: ["CGU", "Mentions légales", "Cookies", "RGPD"] },
-        ].map(col => (
-          <div key={col.title}>
-            <h4 className="text-stone-900 font-medium text-sm mb-4">{col.title}</h4>
-            <ul className="space-y-2">
-              {col.links.map(l => (
-                <li key={l}>
-                  <a href="#" className="text-stone-500 hover:text-amber-700 text-sm transition-colors">
-                    {l}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-stone-100 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-stone-400 text-xs">© 2025 LuxeStay & Transit. Tous droits réservés.</p>
-        <p className="text-stone-400 text-xs flex items-center gap-1.5">
-          Paiements sécurisés par
-          <span className="text-amber-700 font-medium">Stripe</span>
-          · Base de données
-          <span className="text-amber-700 font-medium">Supabase</span>
-        </p>
-      </div>
-    </footer>
   );
 }

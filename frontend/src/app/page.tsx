@@ -25,7 +25,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import SearchBar from "@/components/booking/SearchBar";
 import StatsSection from "@/components/layout/StatsSection";
-import FeaturedRooms from "@/components/cards/FeaturedRooms";
+import FeaturedRooms from "@/components/layout/FeaturedRooms";
 import TestimonialsSection from "@/components/layout/TestimonialsSection";
 import Footer from "@/components/layout/Footer";
 
@@ -302,6 +302,20 @@ export default function HomePage() {
     },
   ];
 
+  const destRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: destScroll } = useScroll({
+    target: destRef,
+    offset: ["start end", "end start"],
+  });
+  const destTitleY = useTransform(destScroll, [0, 1], [-100, 100]);
+
+  const serviceRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: serviceScroll } = useScroll({
+    target: serviceRef,
+    offset: ["start end", "end start"],
+  });
+  const serviceTitleY = useTransform(serviceScroll, [0, 1], [-80, 80]);
+
   return (
     <div className="relative min-h-screen bg-[#FAFAF8] text-stone-800 overflow-x-hidden">
       <Navbar />
@@ -333,22 +347,6 @@ export default function HomePage() {
         >
           {mounted && (
             <>
-              {/* Premium badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 mb-8"
-              >
-                <div className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                </div>
-                <span className="text-xs font-bold tracking-[0.2em] uppercase text-white">
-                  L&apos;excellence du voyage
-                </span>
-              </motion.div>
-
               {/* H1 — Oversized editorial typography */}
               <motion.h1
                 initial={{ opacity: 0, y: 40 }}
@@ -435,8 +433,13 @@ export default function HomePage() {
       <FloatingSearch />
 
       {/* ── DESTINATIONS ─────────────────────────────────────────────── */}
-      <section className="relative z-10 py-32 px-4 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-20 gap-8">
+      <section ref={destRef} className="relative z-10 py-48 px-4 max-w-7xl mx-auto overflow-hidden">
+        {/* Large background text */}
+        <div className="absolute top-40 left-0 text-[20rem] font-serif font-black text-stone-50 leading-none select-none pointer-events-none -translate-x-1/4">
+          World
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-32 gap-8 relative z-10">
           <div className="max-w-2xl">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -450,11 +453,8 @@ export default function HomePage() {
               </span>
             </motion.div>
             <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl md:text-6xl font-serif font-light text-stone-900 leading-tight"
+              style={{ y: destTitleY }}
+              className="text-4xl md:text-8xl font-serif font-light text-stone-900 leading-tight"
             >
               Où votre prochain récit{" "}
               <span className="italic text-amber-800">commence-t-il ?</span>
@@ -471,7 +471,7 @@ export default function HomePage() {
               className="group inline-flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-stone-900 hover:text-amber-800 transition-colors"
             >
               Voir la collection
-              <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center group-hover:border-amber-800 group-hover:bg-amber-800 group-hover:text-white transition-all">
+              <div className="w-12 h-12 rounded-full border border-stone-200 flex items-center justify-center group-hover:border-amber-800 group-hover:bg-amber-800 group-hover:text-white transition-all">
                 <ArrowRight
                   size={16}
                   className="transition-transform group-hover:translate-x-0.5"
@@ -488,48 +488,75 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SERVICES ─────────────────────────────────────────────────── */}
-      <section className="relative z-10 py-32 px-4 bg-white/50 backdrop-blur-sm border-y border-stone-100">
+      {/* ── SERVICES (ART DE VIVRE) ──────────────────────────────────── */}
+      <section ref={serviceRef} className="relative z-10 py-48 px-4 bg-stone-50 border-y border-stone-100 overflow-hidden">
+        {/* Abstract background shape */}
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-amber-50 rounded-full blur-[150px] -mr-64 -mt-64 opacity-50" />
+        
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24 max-w-3xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex items-center justify-center gap-3 mb-6"
-            >
-              <div className="h-[1px] w-8 bg-amber-800/30" />
-              <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-800">
-                Art de Vivre
-              </span>
-              <div className="h-[1px] w-8 bg-amber-800/30" />
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl md:text-6xl font-serif font-light text-stone-900 mb-8"
-            >
-              L&apos;excellence dans le{" "}
-              <span className="italic text-amber-800">moindre détail</span>
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-stone-500 text-lg font-light leading-relaxed"
-            >
-              Plus qu&apos;une simple réservation, nous vous offrons une tranquillité d&apos;esprit absolue 
-              et un accès privilégié aux expériences les plus raffinées.
-            </motion.p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((s, i) => (
-              <ServiceCard key={s.title} {...s} index={i} />
-            ))}
+          <div className="grid lg:grid-cols-12 gap-24 items-center">
+            <div className="lg:col-span-5">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-widest mb-8"
+              >
+                Notre Philosophie
+              </motion.div>
+              <motion.h2
+                style={{ y: serviceTitleY }}
+                className="text-4xl md:text-8xl font-serif font-light text-stone-900 mb-12 leading-[1.1]"
+              >
+                L&apos;art de vivre au <span className="italic text-amber-800">quotidien</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+                className="text-stone-500 text-2xl font-light leading-relaxed mb-16"
+              >
+                Nous transcendons la simple réservation pour créer des moments d&apos;exception. 
+                Chaque détail est orchestré pour votre confort absolu.
+              </motion.p>
+              
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-amber-800 font-serif text-3xl mb-2 italic">24/7</h4>
+                  <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Assistance</p>
+                </div>
+                <div>
+                  <h4 className="text-amber-800 font-serif text-3xl mb-2 italic">100%</h4>
+                  <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Sur Mesure</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="lg:col-span-7">
+              <div className="grid md:grid-cols-2 gap-6">
+                {services.map((s, i) => (
+                  <motion.div
+                    key={s.title}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    className={`p-8 rounded-[2.5rem] ${i % 2 === 0 ? 'bg-white shadow-xl shadow-stone-200/50' : 'bg-stone-900 text-white md:translate-y-12'}`}
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 ${i % 2 === 0 ? 'bg-amber-50 text-amber-800' : 'bg-white/10 text-amber-400'}`}>
+                      <s.icon size={28} />
+                    </div>
+                    <h3 className={`text-xl font-semibold mb-4 font-serif ${i % 2 === 0 ? 'text-stone-900' : 'text-white'}`}>
+                      {s.title}
+                    </h3>
+                    <p className={`text-base leading-relaxed ${i % 2 === 0 ? 'text-stone-500' : 'text-stone-400'}`}>
+                      {s.desc}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
