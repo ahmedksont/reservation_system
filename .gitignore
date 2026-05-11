@@ -5,3 +5,8 @@ backend/target/
 target/
 
 .env
+/.vscode
+/frontend/.next/*
+
+frontend/.next/trace
+/frontend/.next
