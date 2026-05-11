@@ -37,6 +37,8 @@ import Navbar from "@/components/layout/Navbar";
 import { adminApi } from "@/lib/api";
 import type { AdminStats, Chambre, Trajet } from "@/types";
 import toast from "react-hot-toast";
+import { notFound } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 // ─── Types ─────────────────────────────────────────────────────
 interface ChambreFormData {
@@ -747,13 +749,27 @@ function StatCard({ icon: Icon, label, value, sub, color, index }: {
 
 // ─── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard() {
+  const { user } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "trajets" | "chambres" | "reservations" | "clients">("overview");
 
   useEffect(() => {
-    fetchStats();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && user?.role === "ADMIN") {
+      fetchStats();
+    }
+  }, [mounted, user]);
+
+  if (mounted && (!user || user.role !== "ADMIN")) {
+    notFound();
+  }
+
+  if (!mounted) return null;
 
   const fetchStats = async () => {
     setLoading(true);
