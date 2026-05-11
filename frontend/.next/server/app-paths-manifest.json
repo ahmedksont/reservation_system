@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/reservations/[id]/page": "app/reservations/[id]/page.js",
+  "/transport/page": "app/transport/page.js",
+  "/reservations/page": "app/reservations/page.js",
+  "/payment/[id]/page": "app/payment/[id]/page.js",
+  "/transport/[id]/page": "app/transport/[id]/page.js"
+}

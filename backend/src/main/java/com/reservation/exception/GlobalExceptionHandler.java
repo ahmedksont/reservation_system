@@ -1,0 +1,73 @@
+package com.reservation.exception;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+
+    record ErrorResponse(String message, int status, LocalDateTime timestamp) {}
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse(ex.getMessage(), 404, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(ex.getMessage(), 400, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(DisponibiliteException.class)
+    public ResponseEntity<ErrorResponse> handleDisponibilite(DisponibiliteException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse(ex.getMessage(), 409, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(ConcurrenceException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrence(ConcurrenceException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse(ex.getMessage(), 409, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(new ErrorResponse(ex.getMessage(), 403, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ErrorResponse> handlePayment(PaymentException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+            .body(new ErrorResponse(ex.getMessage(), 402, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(err -> {
+            String field = ((FieldError) err).getField();
+            errors.put(field, err.getDefaultMessage());
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        log.error("Erreur inattendue", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(new ErrorResponse("Erreur interne du serveur", 500, LocalDateTime.now()));
+    }
+}

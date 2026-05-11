@@ -1,0 +1,7 @@
+frontend/node_modules/
+*.properties
+
+backend/target/
+target/
+
+.env
