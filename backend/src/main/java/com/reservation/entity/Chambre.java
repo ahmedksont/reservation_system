@@ -11,8 +11,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "chambres", indexes = {
-    @Index(name = "idx_chambre_type", columnList = "type"),
-    @Index(name = "idx_chambre_prix", columnList = "prix_par_nuit")
+        @Index(name = "idx_chambre_type", columnList = "type"),
+        @Index(name = "idx_chambre_prix", columnList = "prix_par_nuit")
 })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -49,6 +49,14 @@ public class Chambre {
     @Builder.Default
     private List<String> equipements = new ArrayList<>();
 
+    // ✅ Changement : imageUrl devient une liste d'images
+    @ElementCollection
+    @CollectionTable(name = "chambre_images", joinColumns = @JoinColumn(name = "chambre_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private List<String> images = new ArrayList<>();
+
+    // Garder l'ancien champ pour compatibilité (optionnel)
     @Column(name = "image_url")
     private String imageUrl;
 
@@ -66,5 +74,23 @@ public class Chambre {
 
     public enum TypeChambre {
         SIMPLE, DOUBLE, SUITE, PENTHOUSE, FAMILIALE
+    }
+
+    // ✅ Méthode utilitaire pour obtenir la première image
+    public String getFirstImage() {
+        if (images != null && !images.isEmpty()) {
+            return images.get(0);
+        }
+        return imageUrl;
+    }
+
+    public List<String> getAllImages() {
+        if (images != null && !images.isEmpty()) {
+            return images;
+        }
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            return List.of(imageUrl);
+        }
+        return new ArrayList<>();
     }
 }
