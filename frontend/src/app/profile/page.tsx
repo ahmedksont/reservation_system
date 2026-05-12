@@ -27,16 +27,33 @@ import Footer from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
 import { userApi, authApi } from "@/lib/api";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, notFound } from "next/navigation";
 
 export default function ProfilePage() {
   const { user, logout, updateUser } = useAuthStore();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) return null;
+
+  if (!user) {
+    notFound();
+    return null;
+  }
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -223,7 +240,7 @@ export default function ProfilePage() {
               </div>
               <div className="mt-6 pt-6 border-t border-stone-50 px-2">
                 <button 
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 hover:bg-red-50 rounded-2xl transition-colors font-medium text-sm"
                 >
                   <LogOut size={18} />
