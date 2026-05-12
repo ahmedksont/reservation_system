@@ -18,9 +18,10 @@ import {
   Calendar,
   Search,
   X,
-  TrendingUp,
-  Armchair,
   ChevronRight,
+  Navigation,
+  Globe,
+  Wind,
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
@@ -36,17 +37,17 @@ const TRANSPORT_ICONS = {
 };
 
 const TRANSPORT_LABELS = {
-  TRAIN: "Train",
-  AVION: "Avion",
-  BUS: "Bus",
-  BATEAU: "Bateau",
+  TRAIN: "Chemin de Fer",
+  AVION: "Lignes Aériennes",
+  BUS: "Transport Routier",
+  BATEAU: "Lignes Maritimes",
 };
 
-const TRANSPORT_COLORS = {
-  TRAIN: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: "text-emerald-600" },
-  AVION: { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", icon: "text-sky-600" },
-  BUS: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", icon: "text-amber-600" },
-  BATEAU: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", icon: "text-indigo-600" },
+const TRANSPORT_META = {
+  TRAIN: { label: "Rail Premium", detail: "Confort & Vitesse" },
+  AVION: { label: "First Class", detail: "L'excellence en vol" },
+  BUS: { label: "Business Class", detail: "Luxe & Mobilité" },
+  BATEAU: { label: "Grand Voyage", detail: "Sérénité en mer" },
 };
 
 export default function TransportPage() {
@@ -55,7 +56,6 @@ export default function TransportPage() {
 
   const [allTrajets, setAllTrajets] = useState<Trajet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
 
   const [search, setSearch] = useState({
@@ -66,29 +66,18 @@ export default function TransportPage() {
     type: "Tous",
   });
 
-  // ─── FETCH ALL DATA ─────────────────────────────────────────────
   const fetchTrajets = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await trajetApi.get({ page, size: 50 }); // fetch more for client filtering
-      console.log("API response:", response.data);
-
+      const response = await trajetApi.get({ page, size: 50 });
       const data = response.data;
-      
       if (data && Array.isArray(data.content)) {
         setAllTrajets(data.content);
-        setTotalPages(data.totalPages ?? 1);
       } else if (Array.isArray(data)) {
         setAllTrajets(data);
-        setTotalPages(1);
-      } else {
-        setAllTrajets([]);
-        setTotalPages(0);
       }
     } catch (error) {
-      console.error("Error fetching trajets:", error);
-      toast.error("Erreur lors du chargement des trajets");
-      setAllTrajets([]);
+      toast.error("Erreur de chargement");
     } finally {
       setLoading(false);
     }
@@ -98,477 +87,224 @@ export default function TransportPage() {
     fetchTrajets();
   }, [fetchTrajets]);
 
-  const handleReserve = (trajet: Trajet) => {
-    router.push(`/transport/${trajet.id}?places=${search.places}`);
-  };
-
-  // ─── CLIENT-SIDE FILTERING ──────────────────────────────────────
   const filtered = useMemo(() => {
     return allTrajets.filter((t) => {
-      // Filter by transport type
-      if (search.type !== "Tous" && t.typeTransport !== search.type) {
-        return false;
-      }
-
-      // Filter by depart (case-insensitive partial match)
-      if (search.depart) {
-        const departLower = search.depart.toLowerCase().trim();
-        if (!t.lieuDepart.toLowerCase().includes(departLower)) {
-          return false;
-        }
-      }
-
-      // Filter by arrivee (case-insensitive partial match)
-      if (search.arrivee) {
-        const arriveeLower = search.arrivee.toLowerCase().trim();
-        if (!t.lieuArrivee.toLowerCase().includes(arriveeLower)) {
-          return false;
-        }
-      }
-
-      // Filter by date (same day)
-      if (search.date) {
-        const trajetDate = new Date(t.dateDepart);
-        const filterDate = parseISO(search.date);
-        if (!isSameDay(trajetDate, filterDate)) {
-          return false;
-        }
-      }
-
-      // Filter by places availability
-      if (t.placesDisponibles < search.places) {
-        return false;
-      }
-
+      if (search.type !== "Tous" && t.typeTransport !== search.type) return false;
+      if (search.depart && !t.lieuDepart.toLowerCase().includes(search.depart.toLowerCase())) return false;
+      if (search.arrivee && !t.lieuArrivee.toLowerCase().includes(search.arrivee.toLowerCase())) return false;
+      if (search.date && !isSameDay(new Date(t.dateDepart), parseISO(search.date))) return false;
+      if (t.placesDisponibles < search.places) return false;
       return true;
     });
   }, [allTrajets, search]);
 
-  const hasActiveSearch = search.depart || search.arrivee || search.date;
-
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-stone-800">
+    <div className="min-h-screen bg-[#FDFDFC] text-[#1C1917]">
       <Navbar />
 
-      {/* ── HERO HEADER ─────────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-8 px-4 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] rounded-full bg-amber-100/25 blur-[100px]" />
-          <div className="absolute top-1/4 right-0 w-[400px] h-[400px] rounded-full bg-sky-50/40 blur-[80px]" />
+      {/* ── LUXURY HEADER ───────────────────────────────────────────── */}
+      <section className="relative pt-32 pb-16 px-4 overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-50 rounded-full blur-[120px] opacity-40 -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-stone-100 rounded-full blur-[100px] opacity-30 -ml-20 -mb-20" />
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-6"
           >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3 block">
-              Voyagez en toute sérénité
+            <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-amber-800">
+              <Globe size={12} />
+              Évasion Exclusive
             </span>
-            <h1 className="font-serif text-4xl md:text-6xl font-light text-stone-900 mb-4 leading-tight">
-              Nos <span className="italic text-amber-800">Transports</span>
+            <h1 className="font-serif text-5xl md:text-7xl font-light leading-tight text-stone-900">
+              L&apos;Art du <span className="italic text-amber-800 underline decoration-amber-100 underline-offset-8">Mouvement</span>
             </h1>
-            <p className="text-stone-500 text-lg">
-              {loading
-                ? "Chargement..."
-                : `${filtered.length} trajet${filtered.length !== 1 ? "s" : ""} disponible${filtered.length !== 1 ? "s" : ""}`}
+            <p className="max-w-2xl mx-auto text-stone-400 font-medium text-lg leading-relaxed">
+              Découvrez notre sélection de trajets d&apos;exception. Des liaisons aériennes privées aux transferts routiers business class, voyagez avec distinction.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* ── SEARCH BAR ──────────────────────────────────────────────── */}
-      <section className="sticky top-16 z-30 bg-white/80 backdrop-blur-xl border-b border-stone-200/60">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="bg-white rounded-2xl border border-stone-200/80 shadow-sm shadow-stone-900/3 p-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
-                {/* Départ */}
-                <div className="relative group">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200">
-                    <MapPin size={16} className="text-amber-700 shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                        Départ
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Ville de départ"
-                        className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        value={search.depart}
-                        onChange={(e) =>
-                          setSearch((s) => ({ ...s, depart: e.target.value }))
-                        }
-                      />
-                    </div>
-                    {search.depart && (
-                      <button
-                        onClick={() => setSearch((s) => ({ ...s, depart: "" }))}
-                        className="shrink-0 text-stone-400 hover:text-stone-600"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Arrivée */}
-                <div className="relative group">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200">
-                    <MapPin size={16} className="text-amber-700 shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                        Arrivée
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Ville d'arrivée"
-                        className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        value={search.arrivee}
-                        onChange={(e) =>
-                          setSearch((s) => ({ ...s, arrivee: e.target.value }))
-                        }
-                      />
-                    </div>
-                    {search.arrivee && (
-                      <button
-                        onClick={() => setSearch((s) => ({ ...s, arrivee: "" }))}
-                        className="shrink-0 text-stone-400 hover:text-stone-600"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Date */}
-                <div className="relative group">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200">
-                    <Calendar size={16} className="text-amber-700 shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                        Date
-                      </span>
-                      <input
-                        type="date"
-                        className="bg-transparent text-sm font-medium text-stone-800 focus:outline-none w-full"
-                        value={search.date}
-                        onChange={(e) =>
-                          setSearch((s) => ({ ...s, date: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Passagers */}
-                <div className="relative group">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200">
-                    <Users size={16} className="text-amber-700 shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                        Passagers
-                      </span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={10}
-                        className="bg-transparent text-sm font-medium text-stone-800 focus:outline-none w-full"
-                        value={search.places}
-                        onChange={(e) =>
-                          setSearch((s) => ({
-                            ...s,
-                            places: Number(e.target.value),
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* CTA */}
-                <button
-                  onClick={() => setPage(0)}
-                  className="h-full min-h-[52px] rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-stone-900/20 active:scale-[0.98]"
-                >
-                  <Search size={16} />
-                  Rechercher
-                </button>
+      {/* ── SEARCH DASHBOARD ────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 -mt-4 mb-20">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.08)] border border-stone-100 p-3"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-stone-50 border border-transparent hover:border-stone-200 transition-all group">
+              <MapPin size={18} className="text-amber-800" />
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Origine</p>
+                <input 
+                  type="text" 
+                  placeholder="D&apos;où partez-vous ?"
+                  className="bg-transparent w-full text-sm font-bold text-stone-900 focus:outline-none placeholder:text-stone-300"
+                  value={search.depart}
+                  onChange={(e) => setSearch(s => ({ ...s, depart: e.target.value }))}
+                />
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
+            
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-stone-50 border border-transparent hover:border-stone-200 transition-all">
+              <Navigation size={18} className="text-amber-800 rotate-45" />
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Destination</p>
+                <input 
+                  type="text" 
+                  placeholder="Où allez-vous ?"
+                  className="bg-transparent w-full text-sm font-bold text-stone-900 focus:outline-none placeholder:text-stone-300"
+                  value={search.arrivee}
+                  onChange={(e) => setSearch(s => ({ ...s, arrivee: e.target.value }))}
+                />
+              </div>
+            </div>
 
-      {/* ── MAIN CONTENT ────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Type filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex gap-2 mb-8 flex-wrap"
-        >
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-stone-50 border border-transparent hover:border-stone-200 transition-all">
+              <Calendar size={18} className="text-amber-800" />
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Date</p>
+                <input 
+                  type="date"
+                  className="bg-transparent w-full text-sm font-bold text-stone-900 focus:outline-none"
+                  value={search.date}
+                  onChange={(e) => setSearch(s => ({ ...s, date: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <button className="bg-stone-900 text-white rounded-2xl py-4 px-8 font-black uppercase tracking-[0.2em] text-xs hover:bg-amber-800 transition-all shadow-xl shadow-stone-900/10 flex items-center justify-center gap-3 active:scale-[0.98]">
+              <Search size={16} />
+              Rechercher
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── FILTER TABS ─────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           {["Tous", "TRAIN", "AVION", "BUS", "BATEAU"].map((t) => {
-            const Icon = t === "Tous" ? Filter : TRANSPORT_ICONS[t as keyof typeof TRANSPORT_ICONS];
-            const colors = t !== "Tous" ? TRANSPORT_COLORS[t as keyof typeof TRANSPORT_COLORS] : null;
             const isActive = search.type === t;
-
             return (
               <button
                 key={t}
-                onClick={() => setSearch((s) => ({ ...s, type: t }))}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                  isActive
-                    ? "bg-stone-900 border-stone-900 text-white shadow-md shadow-stone-900/10"
-                    : colors
-                    ? `${colors.bg} ${colors.border} ${colors.text} hover:shadow-sm`
-                    : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
+                onClick={() => setSearch(s => ({ ...s, type: t }))}
+                className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
+                  isActive 
+                    ? "bg-stone-900 text-white border-stone-900 shadow-xl shadow-stone-900/20" 
+                    : "bg-white text-stone-400 border-stone-100 hover:border-amber-200 hover:text-amber-800"
                 }`}
               >
-                <Icon size={15} className={isActive ? "text-white" : colors?.icon || "text-stone-500"} />
-                {t === "Tous" ? "Tous" : TRANSPORT_LABELS[t as keyof typeof TRANSPORT_LABELS]}
+                {t === "Tous" ? "Toutes les lignes" : TRANSPORT_LABELS[t as keyof typeof TRANSPORT_LABELS]}
               </button>
             );
           })}
-        </motion.div>
+        </div>
+      </div>
 
-        {/* Results */}
-        {loading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl border border-stone-100 p-6 flex items-center gap-6"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-stone-200 animate-pulse shrink-0" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-5 bg-stone-200 rounded animate-pulse w-1/3" />
-                  <div className="h-3 bg-stone-200 rounded animate-pulse w-1/2" />
-                </div>
-                <div className="w-24 h-8 bg-stone-200 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${search.type}-${page}-${search.depart}-${search.arrivee}-${search.date}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              {filtered.map((t, i) => {
-                const Icon = TRANSPORT_ICONS[t.typeTransport] || Train;
-                const colors = TRANSPORT_COLORS[t.typeTransport] || TRANSPORT_COLORS.TRAIN;
-
-                const dateDepart = new Date(t.dateDepart);
-                const dateArrivee = new Date(t.dateArrivee);
-                const dureeMins = Math.round(
-                  (dateArrivee.getTime() - dateDepart.getTime()) / 60000
-                );
-                const heures = Math.floor(dureeMins / 60);
-                const mins = dureeMins % 60;
-
-                const isFull = t.placesDisponibles < search.places;
-
-                return (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.4 }}
-                    className="group bg-white rounded-2xl border border-stone-200/80 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-5 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300"
-                  >
-                    {/* Icon */}
-                    <div
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${colors.bg} border ${colors.border}`}
-                    >
-                      <Icon size={24} className={colors.icon} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      {/* Route */}
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="text-stone-900 font-semibold text-lg">
-                          {t.lieuDepart}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-stone-300">
-                          <div className="w-8 h-px bg-stone-300" />
-                          <ArrowRight size={14} className="text-stone-400" />
-                          <div className="w-8 h-px bg-stone-300" />
-                        </div>
-                        <span className="text-stone-900 font-semibold text-lg">
-                          {t.lieuArrivee}
-                        </span>
-                        <span
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}
-                        >
-                          {TRANSPORT_LABELS[t.typeTransport]}
-                        </span>
-                      </div>
-
-                      {/* Meta */}
-                      <div className="flex items-center gap-4 text-stone-500 text-sm flex-wrap">
-                        <span className="flex items-center gap-1.5">
-                          <Clock size={13} />
-                          <span className="font-medium text-stone-700">
-                            {format(dateDepart, "HH:mm")}
-                          </span>
-                          <span className="text-stone-300">→</span>
-                          <span className="font-medium text-stone-700">
-                            {format(dateArrivee, "HH:mm")}
-                          </span>
-                          <span className="text-stone-400 ml-1">
-                            ({heures}h{mins > 0 ? ` ${mins}min` : ""})
-                          </span>
-                        </span>
-
-                        <span className="flex items-center gap-1.5">
-                          <Calendar size={13} />
-                          {format(dateDepart, "EEEE d MMMM yyyy", { locale: fr })}
-                        </span>
-
-                        <span className="flex items-center gap-1.5">
-                          <Armchair size={13} />
-                          <span className={t.placesDisponibles < 5 ? "text-amber-600 font-medium" : ""}>
-                            {t.placesDisponibles} place{t.placesDisponibles > 1 ? "s" : ""}
-                          </span>
-                          {t.placesDisponibles < 5 && (
-                            <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                              Bientôt complet
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Price & CTA */}
-                    <div className="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-1 w-full md:w-auto shrink-0">
-                      <div className="text-right">
-                        <div className="text-2xl font-serif font-semibold text-stone-900">
-                          {Number(t.prixParPlace).toFixed(2)}€
-                        </div>
-                        <div className="text-stone-400 text-xs">par personne</div>
-                      </div>
-
-                      <button
-                        onClick={() => handleReserve(t)}
-                        disabled={isFull}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                          isFull
-                            ? "bg-stone-100 text-stone-400 cursor-not-allowed"
-                            : "bg-stone-900 text-white hover:bg-stone-800 hover:shadow-lg hover:shadow-stone-900/20 active:scale-[0.98]"
-                        }`}
-                      >
-                        {isFull ? "Complet" : "Réserver"}
-                        {!isFull && <ChevronRight size={14} />}
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {filtered.length === 0 && (
+      {/* ── TRANSPORT LISTING ───────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((t, i) => {
+              const Icon = TRANSPORT_ICONS[t.typeTransport] || Train;
+              const meta = TRANSPORT_META[t.typeTransport] || TRANSPORT_META.TRAIN;
+              const dateDepart = new Date(t.dateDepart);
+              const dateArrivee = new Date(t.dateArrivee);
+              
+              return (
                 <motion.div
+                  key={t.id}
+                  layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl border border-stone-200 p-16 text-center"
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.05, duration: 0.5 }}
+                  onClick={() => router.push(`/transport/${t.id}?places=${search.places}`)}
+                  className="group relative bg-white rounded-[2.5rem] border border-stone-100 p-8 cursor-pointer hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.06)] hover:border-amber-100 transition-all duration-500"
                 >
-                  <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp size={24} className="text-stone-400" />
+                  <div className="flex justify-between items-start mb-12">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-900 group-hover:bg-amber-800 group-hover:text-white group-hover:scale-110 transition-all duration-500 shadow-sm">
+                        <Icon size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-serif text-xl font-bold text-stone-900">{meta.label}</h3>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">{meta.detail}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">À partir de</p>
+                      <p className="text-3xl font-serif font-light text-stone-900">{t.prixParPlace.toFixed(0)}<span className="text-base italic text-amber-800">€</span></p>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-stone-900 mb-2">
-                    Aucun trajet trouvé
-                  </h3>
-                  <p className="text-stone-500 text-sm max-w-md mx-auto mb-6">
-                    {allTrajets.length === 0
-                      ? "Aucun trajet n'est disponible pour le moment."
-                      : "Aucun trajet ne correspond à vos critères de recherche."}
-                  </p>
-                  {allTrajets.length > 0 && (
-                    <button
-                      onClick={() => {
-                        setSearch({
-                          depart: "",
-                          arrivee: "",
-                          date: "",
-                          places: 1,
-                          type: "Tous",
-                        });
-                      }}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-amber-50 text-amber-800 rounded-xl font-medium text-sm border border-amber-200 hover:bg-amber-100 transition-colors"
-                    >
-                      <X size={14} />
-                      Réinitialiser la recherche
-                    </button>
-                  )}
+
+                  <div className="relative flex items-center justify-between gap-6 mb-12">
+                    <div className="text-left flex-1">
+                      <p className="text-3xl font-serif font-bold text-stone-900">{format(dateDepart, "HH:mm")}</p>
+                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuDepart}</p>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center gap-2 relative">
+                      <div className="w-full h-[2px] bg-stone-50 flex items-center justify-center relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-1000" />
+                        <div className="w-8 h-8 rounded-full bg-white border border-stone-50 flex items-center justify-center z-10 shadow-sm group-hover:rotate-[360deg] transition-transform duration-1000">
+                          <Wind size={14} className="text-amber-800" />
+                        </div>
+                      </div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400">Direct Voyage</p>
+                    </div>
+
+                    <div className="text-right flex-1">
+                      <p className="text-3xl font-serif font-bold text-stone-900">{format(dateArrivee, "HH:mm")}</p>
+                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuArrivee}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-8 border-t border-dashed border-stone-100">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 text-stone-400">
+                        <Users size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{t.placesDisponibles} places</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-stone-400">
+                        <Clock size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Temps réel</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-amber-800 group-hover:translate-x-2 transition-transform">
+                      <span className="text-[10px] font-black uppercase tracking-widest">Réserver</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
                 </motion.div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
-            <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                page === 0
-                  ? "border-stone-200 text-stone-300 cursor-not-allowed"
-                  : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-              }`}
-            >
-              ‹
-            </button>
-
-            {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-              let pageNum = i;
-              if (totalPages > 5 && page > 2) {
-                pageNum = page - 2 + i;
-                if (pageNum >= totalPages) pageNum = totalPages - 5 + i;
-              }
-              if (pageNum >= 0 && pageNum < totalPages) {
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                      page === pageNum
-                        ? "bg-stone-900 border-stone-900 text-white"
-                        : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-                    }`}
-                  >
-                    {pageNum + 1}
-                  </button>
-                );
-              }
-              return null;
+              );
             })}
+          </AnimatePresence>
+        </div>
 
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page === totalPages - 1}
-              className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                page === totalPages - 1
-                  ? "border-stone-200 text-stone-300 cursor-not-allowed"
-                  : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-              }`}
-            >
-              ›
-            </button>
-          </div>
+        {filtered.length === 0 && !loading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-20 text-center"
+          >
+            <div className="w-20 h-20 rounded-full bg-stone-50 flex items-center justify-center mx-auto mb-6">
+              <Search size={32} className="text-stone-200" />
+            </div>
+            <h3 className="font-serif text-2xl text-stone-900 mb-2">Aucun itinéraire trouvé</h3>
+            <p className="text-stone-400 max-w-sm mx-auto">Veuillez ajuster vos critères de recherche pour découvrir d&apos;autres destinations.</p>
+          </motion.div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

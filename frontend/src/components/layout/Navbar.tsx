@@ -91,7 +91,7 @@ export default function Navbar() {
                       className="absolute right-0 top-12 w-52 bg-white rounded-2xl border border-stone-200/80 shadow-xl shadow-stone-900/10 py-2 overflow-hidden"
                     >
                       <Link
-                        href="/dashboard"
+                        href="/profile"
                         className="flex items-center gap-3 px-4 py-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-50 text-sm transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
@@ -172,12 +172,21 @@ export default function Navbar() {
             })}
             <div className="flex flex-col gap-2 pt-4 border-t border-stone-100 mt-2">
               {user ? (
-                <button
-                  onClick={() => { logout(); setMenuOpen(false); }}
-                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100 transition-all text-sm font-medium"
-                >
-                  <LogOut size={16} /> Déconnexion
-                </button>
+                <>
+                  <Link
+                    href="/profile"
+                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-stone-900 text-white hover:bg-stone-800 transition-all text-sm font-medium"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <User size={16} /> Mon profil
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setMenuOpen(false); }}
+                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-100 transition-all text-sm font-medium"
+                  >
+                    <LogOut size={16} /> Déconnexion
+                  </button>
+                </>
               ) : (
                 <>
                   <Link
