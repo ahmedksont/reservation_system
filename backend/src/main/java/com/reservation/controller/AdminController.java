@@ -1,5 +1,6 @@
 package com.reservation.controller;
 
+import com.reservation.dto.request.AdminUpdateUserRequest;
 import com.reservation.dto.response.AuthResponse;
 import com.reservation.entity.Client;
 import com.reservation.exception.BusinessException;
@@ -7,8 +8,6 @@ import com.reservation.repository.ChambreRepository;
 import com.reservation.repository.ClientRepository;
 import com.reservation.repository.ReservationRepository;
 import com.reservation.repository.TrajetRepository;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,8 +33,7 @@ public class AdminController {
     private final ReservationRepository reservationRepository;
     private final ChambreRepository chambreRepository;
     private final TrajetRepository trajetRepository;
-    private final ClientRepository clientRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;  // Supprimé la seconde déclaration de clientRepository
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
@@ -44,7 +42,7 @@ public class AdminController {
         BigDecimal revenu = reservationRepository.getTotalRevenu(debutAnnee, LocalDateTime.now());
         List<Object[]> statuts = reservationRepository.getStatistiquesParStatut();
         List<Object[]> revenus = reservationRepository.getRevenusParMois(
-            LocalDateTime.now().minusMonths(6)
+                LocalDateTime.now().minusMonths(6)
         );
 
         long totalReservations = reservationRepository.count();
@@ -52,19 +50,19 @@ public class AdminController {
         long chambresDisponibles = chambreRepository.countDisponibles();
 
         Map<String, Object> stats = Map.of(
-            "totalClients",      totalClients,
-            "totalReservations", totalReservations,
-            "reservationsConfirmees", statuts.stream()
-                .filter(s -> "CONFIRMEE".equals(s[0]))
-                .mapToLong(s -> (Long) s[1]).sum(),
-            "revenuTotal",    revenu != null ? revenu : BigDecimal.ZERO,
-            "chambresDisponibles", chambresDisponibles,
-            "repartitionStatuts", statuts.stream().map(s -> Map.of(
-                "statut", s[0], "count", s[1]
-            )).collect(Collectors.toList()),
-            "revenusMensuels", revenus.stream().map(r -> Map.of(
-                "mois", r[0], "count", r[1], "revenu", r[2]
-            )).collect(Collectors.toList())
+                "totalClients",      totalClients,
+                "totalReservations", totalReservations,
+                "reservationsConfirmees", statuts.stream()
+                        .filter(s -> "CONFIRMEE".equals(s[0]))
+                        .mapToLong(s -> (Long) s[1]).sum(),
+                "revenuTotal",    revenu != null ? revenu : BigDecimal.ZERO,
+                "chambresDisponibles", chambresDisponibles,
+                "repartitionStatuts", statuts.stream().map(s -> Map.of(
+                        "statut", s[0], "count", s[1]
+                )).collect(Collectors.toList()),
+                "revenusMensuels", revenus.stream().map(r -> Map.of(
+                        "mois", r[0], "count", r[1], "revenu", r[2]
+                )).collect(Collectors.toList())
         );
 
         return ResponseEntity.ok(stats);
@@ -74,32 +72,34 @@ public class AdminController {
     public ResponseEntity<Page<AuthResponse.UserInfo>> getClients(
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(
-            clientRepository.findAll(pageable).map(AuthResponse.UserInfo::from)
-        );
-    }
-
-    @PutMapping("/clients/{id}/desactiver")
-    public ResponseEntity<Void> desactiverClient(@PathVariable String id) {
-        clientRepository.findById(id).ifPresent(c -> {
-            c.setActif(false);
-            clientRepository.save(c);
-        });
-        return ResponseEntity.noContent().build();
-    }
-    /**
-     * GET /api/admin/users - Liste paginée des utilisateurs (admin)
-     */
-    @GetMapping("/users")
-    public ResponseEntity<Page<AuthResponse.UserInfo>> getAllUsers(
-            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-
-        return ResponseEntity.ok(
                 clientRepository.findAll(pageable).map(AuthResponse.UserInfo::from)
         );
     }
 
+    @PutMapping("/clients/{id}/desactiver")
+    public ResponseEntity<AuthResponse.UserInfo> desactiverClient(@PathVariable String id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Client non trouvé"));
+        client.setActif(!client.getActif());
+        client = clientRepository.save(client);
+        return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
+    }
+
     /**
-     * GET /api/admin/users/{id} - Détails d'un utilisateur (admin)
+     * GET /api/admin/users - Liste de tous les utilisateurs (sans pagination)
+     */
+    @GetMapping("/users")
+    public ResponseEntity<List<AuthResponse.UserInfo>> getAllUsers() {
+        List<AuthResponse.UserInfo> users = clientRepository.findAll()
+                .stream()
+                .map(AuthResponse.UserInfo::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(users);
+    }
+
+    /**
+     * GET /api/admin/users/{id} - Détails d'un utilisateur
      */
     @GetMapping("/users/{id}")
     public ResponseEntity<AuthResponse.UserInfo> getUserById(@PathVariable String id) {
@@ -110,7 +110,7 @@ public class AdminController {
     }
 
     /**
-     * PUT /api/admin/users/{id} - Modifier un utilisateur (admin)
+     * PUT /api/admin/users/{id} - Modifier un utilisateur
      */
     @PutMapping("/users/{id}")
     public ResponseEntity<AuthResponse.UserInfo> updateUser(
@@ -138,7 +138,7 @@ public class AdminController {
             client.setTelephone(request.getTelephone());
         }
         if (request.getRole() != null) {
-            client.setRole(request.getRole());
+            client.setRole(Client.Role.valueOf(request.getRole()));
         }
         if (request.getActif() != null) {
             client.setActif(request.getActif());
@@ -150,15 +150,12 @@ public class AdminController {
     }
 
     /**
-     * DELETE /api/admin/users/{id} - Supprimer définitivement un utilisateur (admin)
+     * DELETE /api/admin/users/{id} - Supprimer un utilisateur
      */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
-
-        // Empêcher la suppression de son propre compte
-        // (vous devrez passer l'ID de l'admin connecté)
 
         clientRepository.delete(client);
 
@@ -166,14 +163,13 @@ public class AdminController {
     }
 
     /**
-     * POST /api/admin/users/{id}/reset-password - Réinitialiser le mot de passe (admin)
+     * POST /api/admin/users/{id}/reset-password - Réinitialiser le mot de passe
      */
     @PostMapping("/users/{id}/reset-password")
-    public ResponseEntity<Void> resetUserPassword(@PathVariable String id) {
+    public ResponseEntity<Void> resetPassword(@PathVariable String id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
 
-        // Mot de passe par défaut
         String defaultPassword = "password123";
         client.setMotDePasse(passwordEncoder.encode(defaultPassword));
         clientRepository.save(client);

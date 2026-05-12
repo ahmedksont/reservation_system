@@ -100,4 +100,9 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteOwnAccount(@AuthenticationPrincipal String clientId) {
+        clientRepository.deleteById(clientId);
+        return ResponseEntity.noContent().build();
+    }
 }

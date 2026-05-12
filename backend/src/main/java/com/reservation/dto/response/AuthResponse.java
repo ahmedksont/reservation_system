@@ -1,19 +1,25 @@
 package com.reservation.dto.response;
 
 import com.reservation.entity.Client;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
     private String token;
     private UserInfo user;
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class UserInfo {
         private String id;
         private String nom;

@@ -82,4 +82,9 @@ public class AuthController {
 
         return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
     }
-}   
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal String clientId) {
+        clientRepository.deleteById(clientId);
+        return ResponseEntity.noContent().build();
+    }
+}

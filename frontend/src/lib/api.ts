@@ -88,6 +88,7 @@ export const authApi = {
   me: () => api.get("/auth/me"),
   refresh: () => api.post("/auth/refresh"),
   logout: () => api.post("/auth/logout"),
+  deleteAccount: () => api.delete("/auth/account")
 };
 
 // ============================================
@@ -106,6 +107,28 @@ export const userApi = {
     newPassword: string;
     confirmPassword: string;
   }) => api.post("/user/change-password", data),
+  deleteAccount: () => api.delete("/user/account"),
+};
+// Admin User Management
+export const adminUserApi = {
+  getAllUsers: (page = 0, size = 20) => 
+    api.get("/admin/users", { params: { page, size } }),
+  getUserById: (id: string) => 
+    api.get(`/admin/users/${id}`),
+  updateUser: (id: string, data: {
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    telephone?: string;
+    role?: string;
+    actif?: boolean;
+  }) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id: string) => 
+    api.delete(`/admin/users/${id}`),
+  resetPassword: (id: string) => 
+    api.post(`/admin/users/${id}/reset-password`),
+  desactiverUser: (id: string) => 
+    api.put(`/admin/clients/${id}/desactiver`),
 };
 
 // ============================================
