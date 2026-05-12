@@ -323,7 +323,7 @@ export default function ProfilePage() {
                             type="tel" 
                             value={profileForm.telephone}
                             onChange={(e) => setProfileForm({ ...profileForm, telephone: e.target.value })}
-                            placeholder="+33 6 00 00 00 00"
+                            placeholder="+216 46280499"
                             className="w-full pl-12 pr-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium"
                           />
                         </div>

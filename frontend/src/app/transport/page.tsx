@@ -265,7 +265,7 @@ export default function TransportPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Passage</p>
-                        <p className="text-3xl font-serif font-light text-stone-900">{t.prixParPlace.toFixed(0)}<span className="text-base italic text-amber-800">€</span></p>
+                        <p className="text-3xl font-serif font-light text-stone-900">{t.prixParPlace.toFixed(0)}<span className="text-base italic text-amber-800">TND</span></p>
                       </div>
                     </div>
 

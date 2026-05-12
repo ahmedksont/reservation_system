@@ -337,7 +337,7 @@ export default function RoomDetailPage() {
 
                 <div className="flex items-baseline justify-between mb-10">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-serif text-4xl font-bold text-stone-900">{room.prixParNuit}€</span>
+                    <span className="font-serif text-4xl font-bold text-stone-900">{room.prixParNuit}TND</span>
                     <span className="text-stone-400 text-sm">/ nuit</span>
                   </div>
                   <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
@@ -377,16 +377,16 @@ export default function RoomDetailPage() {
                     className="mb-10 space-y-4 pt-6 border-t border-stone-50"
                   >
                     <div className="flex justify-between text-stone-500 text-sm">
-                      <span>{room.prixParNuit}€ x {nights} nuits</span>
-                      <span className="font-bold text-stone-900">{total}€</span>
+                      <span>{room.prixParNuit}TND x {nights} nuits</span>
+                      <span className="font-bold text-stone-900">{total}TND</span>
                     </div>
                     <div className="flex justify-between text-stone-500 text-sm">
                       <span>Frais de service</span>
-                      <span className="font-bold text-stone-900">0€</span>
+                      <span className="font-bold text-stone-900">0TND</span>
                     </div>
                     <div className="flex justify-between items-center pt-4 border-t border-stone-50">
                       <span className="font-bold text-stone-900">Total</span>
-                      <span className="font-serif text-3xl font-bold text-amber-600">{total}€</span>
+                      <span className="font-serif text-3xl font-bold text-amber-600">{total}TND</span>
                     </div>
                   </motion.div>
                 )}

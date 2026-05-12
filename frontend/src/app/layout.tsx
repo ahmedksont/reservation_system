@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+<<<<<<< Updated upstream
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import Preloader from "@/components/ui/Preloader";
+=======
+import { AuthProvider } from "../components/providers/AuthProvider";
+import dynamic from "next/dynamic";
+
+// Chargement dynamique du ChatBot pour éviter les erreurs SSR
+const ChatBot = dynamic(() => import("../components/chat/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
+>>>>>>> Stashed changes
 
 export const metadata: Metadata = {
   title: "LuxeStay & Transit — Réservation Premium",
@@ -40,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
+          <ChatBot />
         </AuthProvider>
       </body>
     </html>

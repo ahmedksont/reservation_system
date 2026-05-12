@@ -43,10 +43,10 @@ export default function RegisterPage() {
   };
 
   const fields = [
-    { name: "prenom" as const, label: "Prénom",         icon: User,  type: "text",     placeholder: "Jean" },
-    { name: "nom"    as const, label: "Nom",            icon: User,  type: "text",     placeholder: "Dupont" },
-    { name: "email"  as const, label: "Email",          icon: Mail,  type: "email",    placeholder: "jean@exemple.com" },
-    { name: "telephone" as const, label: "Téléphone",   icon: Phone, type: "tel",      placeholder: "+33 6 00 00 00 00" },
+    { name: "prenom" as const, label: "Prénom",         icon: User,  type: "text",     placeholder: "ahmed" },
+    { name: "nom"    as const, label: "Nom",            icon: User,  type: "text",     placeholder: "ksontini" },
+    { name: "email"  as const, label: "Email",          icon: Mail,  type: "email",    placeholder: "ahmed@exemple.com" },
+    { name: "telephone" as const, label: "Téléphone",   icon: Phone, type: "tel",      placeholder: "+216 46280499" },
   ];
 
   return (

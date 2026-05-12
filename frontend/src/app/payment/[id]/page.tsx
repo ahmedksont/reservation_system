@@ -148,7 +148,7 @@ function PaymentForm({ reservationId, amount }: { reservationId: string; amount:
         ) : (
           <>
             <Lock size={16} />
-            Payer {amount.toFixed(2)}€
+            Payer {amount.toFixed(2)}TND
             <ChevronRight size={14} />
           </>
         )}
@@ -382,7 +382,7 @@ export default function PaymentPage() {
                       </div>
                     </div>
                     <span className="text-stone-900 text-sm font-medium tabular-nums">
-                      {ligne.prixTotal?.toFixed(2)}€
+                      {ligne.prixTotal?.toFixed(2)}TND
                     </span>
                   </div>
                 ))}
@@ -392,7 +392,7 @@ export default function PaymentPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-stone-900 font-semibold">Total TTC</span>
                   <span className="font-serif text-2xl font-semibold text-amber-700">
-                    {reservation?.montantTotal?.toFixed(2)}€
+                    {reservation?.montantTotal?.toFixed(2)}TND
                   </span>
                 </div>
               </div>

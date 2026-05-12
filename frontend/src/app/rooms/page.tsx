@@ -480,11 +480,11 @@ export default function RoomsPage() {
                     className="w-full h-1.5 bg-stone-100 rounded-full appearance-none cursor-pointer accent-amber-600 mb-4"
                   />
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-stone-400">0€</span>
+                    <span className="text-sm font-bold text-stone-400">0TND</span>
                     <span className="px-5 py-2 bg-amber-50 text-amber-700 rounded-xl font-bold text-sm border border-amber-100">
-                      Jusqu'à {filters.prixMax}€
+                      Jusqu'à {filters.prixMax}TND
                     </span>
-                    <span className="text-sm font-bold text-stone-400">2000€</span>
+                    <span className="text-sm font-bold text-stone-400">2000TND</span>
                   </div>
                 </div>
 

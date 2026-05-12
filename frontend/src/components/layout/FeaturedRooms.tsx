@@ -57,7 +57,7 @@ function RoomCard({ chambre, index }: { chambre: Chambre; index: number }) {
         
         {/* Price Tag Overlay */}
         <div className="absolute bottom-6 right-6 px-5 py-2 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white font-serif text-lg">
-          {Number(chambre.prixParNuit).toFixed(0)}€ <span className="text-[10px] opacity-60 uppercase tracking-widest">/ nuit</span>
+          {Number(chambre.prixParNuit).toFixed(0)}TND <span className="text-[10px] opacity-60 uppercase tracking-widest">/ nuit</span>
         </div>
       </div>
 

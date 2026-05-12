@@ -28,4 +28,5 @@ public interface TrajetRepository extends JpaRepository<Trajet, String> {
 
     @Query("SELECT COUNT(t) FROM Trajet t WHERE t.placesDisponibles > 0")
     Long countDisponibles();
+
 }

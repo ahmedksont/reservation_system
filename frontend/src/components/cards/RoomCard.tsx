@@ -63,7 +63,7 @@ export default function RoomCard({ chambre, dateArrivee, dateDepart, index = 0 }
           <div className="absolute bottom-6 left-6 text-white">
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-1">À partir de</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-serif font-bold">{chambre.prixParNuit}€</span>
+              <span className="text-3xl font-serif font-bold">{chambre.prixParNuit}TND</span>
               <span className="text-xs opacity-70">/ nuit</span>
             </div>
           </div>

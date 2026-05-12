@@ -257,7 +257,7 @@ export default function NewReservationPage() {
                           setFormData({ ...formData, prenom: e.target.value })
                         }
                         className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        placeholder="Jean"
+                        placeholder="Ahmed"
                       />
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export default function NewReservationPage() {
                           setFormData({ ...formData, nom: e.target.value })
                         }
                         className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        placeholder="Dupont"
+                        placeholder="Ksontini"
                       />
                     </div>
                   </div>
@@ -297,7 +297,7 @@ export default function NewReservationPage() {
                           setFormData({ ...formData, email: e.target.value })
                         }
                         className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        placeholder="jean.dupont@email.com"
+                        placeholder="ahmed.ksontini@email.com"
                       />
                     </div>
                   </div>
@@ -317,7 +317,7 @@ export default function NewReservationPage() {
                           setFormData({ ...formData, telephone: e.target.value })
                         }
                         className="bg-transparent text-sm font-medium text-stone-800 placeholder:text-stone-400 focus:outline-none w-full"
-                        placeholder="+33 6 12 34 56 78"
+                        placeholder="+216 46280499"
                       />
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export default function NewReservationPage() {
                     <div className="flex justify-between">
                       <span className="text-stone-500">Prix par nuit</span>
                       <span className="text-stone-700 font-medium">
-                        {Number((item as Chambre).prixParNuit).toFixed(2)}€
+                        {Number((item as Chambre).prixParNuit).toFixed(2)}TND
                       </span>
                     </div>
                     {dateArrivee && dateDepart && (
@@ -440,7 +440,7 @@ export default function NewReservationPage() {
                     <div className="flex justify-between">
                       <span className="text-stone-500">Prix par place</span>
                       <span className="text-stone-700 font-medium">
-                        {Number((item as Trajet).prixParPlace).toFixed(2)}€
+                        {Number((item as Trajet).prixParPlace).toFixed(2)}TND
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -456,7 +456,7 @@ export default function NewReservationPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-stone-900 font-semibold">Total TTC</span>
                   <span className="font-serif text-2xl font-semibold text-amber-700">
-                    {total.toFixed(2)}€
+                    {total.toFixed(2)}TND
                   </span>
                 </div>
               </div>

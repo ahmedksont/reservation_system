@@ -150,7 +150,7 @@ export default function TransportDetailPage() {
                <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Tarif Voyageur</p>
                <div className="flex items-baseline gap-1">
                  <span className="text-5xl font-serif font-bold text-stone-900">{trajet.prixParPlace.toFixed(2)}</span>
-                 <span className="text-xl italic text-amber-800 font-serif">€</span>
+                 <span className="text-xl italic text-amber-800 font-serif">TND</span>
                </div>
             </motion.div>
           </div>
@@ -259,8 +259,8 @@ export default function TransportDetailPage() {
                     </div>
                   </div>
                   <div className="space-y-4">
-                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-stone-400"><span>Prix Unitaire</span><span>{trajet.prixParPlace.toFixed(2)}€</span></div>
-                     <div className="flex justify-between text-xl font-serif font-bold text-stone-900"><span>Montant Total</span><span className="text-amber-800">{(trajet.prixParPlace * nombrePlaces).toFixed(2)}€</span></div>
+                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-stone-400"><span>Prix Unitaire</span><span>{trajet.prixParPlace.toFixed(2)}TND</span></div>
+                     <div className="flex justify-between text-xl font-serif font-bold text-stone-900"><span>Montant Total</span><span className="text-amber-800">{(trajet.prixParPlace * nombrePlaces).toFixed(2)}TND</span></div>
                   </div>
                   <button onClick={handleReserve} disabled={reserving || trajet.placesDisponibles < 1} className="w-full py-5 bg-stone-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-[10px] hover:bg-amber-800 transition-all shadow-2xl shadow-stone-900/10 active:scale-[0.98] flex items-center justify-center gap-3">
                     {reserving ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Réserver ce Voyage<ArrowRight size={14} /></>}

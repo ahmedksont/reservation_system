@@ -270,7 +270,7 @@ export default function ReservationsPage() {
                           {paiementCfg.label}
                         </span>
                         <span className="font-serif text-xl font-semibold text-stone-900 ml-2">
-                          {r.montantTotal.toFixed(2)}€
+                          {r.montantTotal.toFixed(2)}TND
                         </span>
                       </div>
                     </div>
@@ -308,7 +308,7 @@ export default function ReservationsPage() {
                             )}
                           </div>
                           <span className="text-stone-900 font-medium tabular-nums">
-                            {l.prixTotal.toFixed(2)}€
+                            {l.prixTotal.toFixed(2)}TND
                           </span>
                         </div>
                       ))}

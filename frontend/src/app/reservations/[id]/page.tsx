@@ -152,7 +152,7 @@ export default function ReservationDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-stone-900 font-bold text-2xl tracking-tight">{ligne.prixTotal.toFixed(2)}€</p>
+                    <p className="text-stone-900 font-bold text-2xl tracking-tight">{ligne.prixTotal.toFixed(2)}TND</p>
                   </div>
                 );
               })}
@@ -178,7 +178,7 @@ export default function ReservationDetailPage() {
             <div className="mb-12">
               <div className="flex items-end gap-2 mb-6">
                 <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">TOTAL À RÉGLER</p>
-                <p className="text-stone-900 font-bold text-4xl tracking-tight">{reservation.montantTotal.toFixed(2)}€</p>
+                <p className="text-stone-900 font-bold text-4xl tracking-tight">{reservation.montantTotal.toFixed(2)}TND</p>
               </div>
               {!isPaid && (
                 <button
