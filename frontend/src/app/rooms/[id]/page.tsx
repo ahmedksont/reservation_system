@@ -395,8 +395,8 @@ export default function RoomDetailPage() {
                   onClick={handleReserve}
                   disabled={!room.disponible}
                   className={`w-full py-5 rounded-2xl font-bold text-sm transition-all shadow-xl active:scale-[0.98] ${!room.disponible
-                      ? "bg-stone-100 text-stone-400 cursor-not-allowed"
-                      : "bg-stone-900 text-white hover:bg-amber-600 shadow-stone-900/20"
+                    ? "bg-stone-100 text-stone-400 cursor-not-allowed"
+                    : "bg-stone-900 text-white hover:bg-amber-600 shadow-stone-900/20"
                     }`}
                 >
                   {room.disponible ? "Réserver maintenant" : "Indisponible"}

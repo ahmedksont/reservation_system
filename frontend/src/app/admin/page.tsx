@@ -39,9 +39,12 @@ import {
   UserCheck,
   UserX,
   Lock,
+  QrCode,
+  Camera
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
+import QRScanner from "@/components/admin/QRScanner";
 import { adminApi, userApi } from "@/lib/api";
 import type { AdminStats, Chambre, Trajet, } from "@/types";
 import toast from "react-hot-toast";
@@ -775,7 +778,7 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "trajets" | "chambres" | "reservations" | "clients">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "trajets" | "chambres" | "reservations" | "clients" | "scanner">("overview");
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (mounted && user?.role === "ADMIN") { fetchStats(); } }, [mounted, user]);
@@ -825,9 +828,9 @@ export default function AdminDashboard() {
 
         <div className="bg-white rounded-2xl border border-stone-200/80 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300">
           <div className="flex border-b border-stone-100 overflow-x-auto">
-            {(["overview", "trajets", "chambres", "clients", "reservations"] as const).map((t) => (
+            {(["overview", "trajets", "chambres", "clients", "reservations", "scanner"] as const).map((t) => (
               <button key={t} onClick={() => setActiveTab(t)} className={`relative px-6 py-4 text-sm font-medium capitalize transition-all whitespace-nowrap ${activeTab === t ? "text-amber-700" : "text-stone-500 hover:text-stone-700"}`}>
-                {t === "overview" ? "Aperçu" : t === "trajets" ? "Trajets" : t === "chambres" ? "Chambres" : t === "clients" ? "Utilisateurs" : "Réservations"}
+                {t === "overview" ? "Aperçu" : t === "trajets" ? "Trajets" : t === "chambres" ? "Chambres" : t === "clients" ? "Utilisateurs" : t === "reservations" ? "Réservations" : "Scanner QR"}
                 {activeTab === t && <motion.div layoutId="admin-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-600" />}
               </button>
             ))}
@@ -838,6 +841,7 @@ export default function AdminDashboard() {
             {activeTab === "chambres" && <ChambresTable />}
             {activeTab === "clients" && <UsersTable />}
             {activeTab === "reservations" && <div className="text-stone-500 text-sm text-center py-8">Gestion des réservations à venir</div>}
+            {activeTab === "scanner" && <QRScanner />}
           </div>
         </div>
       </div>
