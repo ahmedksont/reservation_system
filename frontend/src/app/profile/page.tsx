@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, notFound } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   User as UserIcon, 
@@ -21,8 +22,27 @@ import Footer from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Small delay to let hydration complete
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) return null;
+
+  if (!user) {
+    notFound();
+    return null;
+  }
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   const tabs = [
     { id: "profile", label: "Informations", icon: UserIcon },
@@ -109,7 +129,7 @@ export default function ProfilePage() {
               </div>
               <div className="mt-6 pt-6 border-t border-stone-50 px-2">
                 <button 
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 hover:bg-red-50 rounded-2xl transition-colors font-medium text-sm"
                 >
                   <LogOut size={18} />

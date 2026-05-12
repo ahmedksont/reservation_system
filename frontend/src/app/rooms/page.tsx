@@ -15,8 +15,12 @@ import {
   ArrowUpDown,
   Star,
   BedDouble,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import RoomCard from "@/components/cards/RoomCard";
 import { chambreApi } from "@/lib/api";
 import type { Chambre, PageResponse } from "@/types";
@@ -36,6 +40,12 @@ const SORT_OPTIONS = [
   { value: "prix_decroissant", label: "Prix décroissant" },
   { value: "note_decroissante", label: "Meilleures notes" },
   { value: "capacite_croissante", label: "Capacité" },
+];
+
+const COLLECTIONS = [
+  { id: "oasis", name: "L'Oasis de Paix", location: "Marrakech, Maroc", rooms: 12, image: "https://images.unsplash.com/photo-1590073844006-33379778ae09?auto=format&fit=crop&q=80&w=1000" },
+  { id: "azur", name: "Le Rivage d'Azur", location: "Nice, France", rooms: 8, image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=1000" },
+  { id: "alpin", name: "Le Sommet Alpin", location: "Chamonix, France", rooms: 15, image: "https://images.unsplash.com/photo-1518005020251-58296d85127d?auto=format&fit=crop&q=80&w=1000" },
 ];
 
 export default function RoomsPage() {
@@ -96,6 +106,7 @@ export default function RoomsPage() {
   const handleApplyFilters = () => {
     setPage(0);
     fetchRooms();
+    setFiltersOpen(false);
   };
 
   const handleResetFilters = () => {
@@ -127,106 +138,103 @@ export default function RoomsPage() {
       <Navbar />
 
       {/* ── HERO HEADER ─────────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-12 px-4 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-amber-100/30 blur-[100px]" />
+      <section className="relative pt-36 pb-20 px-4 overflow-hidden bg-stone-900 text-white">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=2000"
+            className="w-full h-full object-cover opacity-40"
+            alt="Luxury Hotel"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-stone-900/80 via-stone-900/40 to-stone-900" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-center md:text-left"
           >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3 block">
-              Collection
-            </span>
-            <h1 className="font-serif text-4xl md:text-6xl font-light text-stone-900 mb-4 leading-tight">
-              Nos <span className="italic text-amber-800">Chambres</span>
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-amber-500 mb-6 px-4 py-2 bg-amber-500/10 rounded-full border border-amber-500/20"
+            >
+              <Zap size={14} className="animate-pulse" />
+              Expériences d'Exception
+            </motion.span>
+            <h1 className="font-serif text-5xl md:text-7xl font-light mb-6 leading-[1.1]">
+              Découvrez nos <br />
+              <span className="italic text-amber-500 font-normal">Sanctuaires de Luxe</span>
             </h1>
-            <p className="text-stone-500 text-lg max-w-xl">
-              {loading
-                ? "Chargement des disponibilités..."
-                : `${rooms.length} chambre${rooms.length !== 1 ? "s" : ""} disponible${rooms.length !== 1 ? "s" : ""} selon vos critères`}
+            <p className="text-stone-300 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-light">
+              Une collection curatée d'espaces conçus pour le confort ultime,
+              où chaque détail raconte une histoire d'élégance et de sérénité.
             </p>
+
+            <div className="flex flex-wrap items-center gap-6 justify-center md:justify-start">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                  <ShieldCheck size={20} className="text-amber-500" />
+                </div>
+                <span className="text-sm font-medium">Réservation Sécurisée</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                  <Star size={20} className="text-amber-500" />
+                </div>
+                <span className="text-sm font-medium">Services 5 Étoiles</span>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ── SEARCH SUMMARY BAR ──────────────────────────────────────── */}
-      <div className="sticky top-16 z-30 bg-white/80 backdrop-blur-xl border-b border-stone-200/60">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-              {/* Quick filter pills */}
-              {filters.dateArrivee && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-medium text-amber-800 shrink-0">
-                  <Calendar size={12} />
-                  {new Date(filters.dateArrivee).toLocaleDateString("fr-FR")}
+      {/* ── COLLECTIONS SELECTOR ───────────────────────────────────── */}
+
+      {/* ── SEARCH & FILTER BAR ────────────────────────────────────── */}
+      <div className="sticky top-16 z-30 bg-white/90 backdrop-blur-xl border-b border-stone-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <button
+                onClick={() => setFiltersOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-100 text-stone-900 text-sm font-semibold hover:bg-stone-200 transition-all border border-transparent hover:border-stone-300"
+              >
+                <SlidersHorizontal size={16} />
+                Filtrer
+                {activeFiltersCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-amber-600 text-white text-[10px] flex items-center justify-center font-bold">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+
+              <div className="hidden md:flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                {TYPES.map((t) => (
                   <button
-                    onClick={() =>
-                      setFilters((f) => ({ ...f, dateArrivee: "" }))
-                    }
-                    className="ml-1 hover:text-amber-950"
+                    key={t}
+                    onClick={() => setFilters((f) => ({ ...f, type: t }))}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filters.type === t
+                        ? "bg-stone-900 text-white shadow-lg"
+                        : "bg-white text-stone-500 hover:text-stone-900 border border-stone-200"
+                      }`}
                   >
-                    <X size={12} />
+                    {TYPE_LABELS[t]}
                   </button>
-                </div>
-              )}
-              {filters.dateDepart && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-medium text-amber-800 shrink-0">
-                  <Calendar size={12} />
-                  {new Date(filters.dateDepart).toLocaleDateString("fr-FR")}
-                  <button
-                    onClick={() =>
-                      setFilters((f) => ({ ...f, dateDepart: "" }))
-                    }
-                    className="ml-1 hover:text-amber-950"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-              {filters.type !== "Tous" && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-medium text-amber-800 shrink-0">
-                  <BedDouble size={12} />
-                  {TYPE_LABELS[filters.type]}
-                  <button
-                    onClick={() => setFilters((f) => ({ ...f, type: "Tous" }))}
-                    className="ml-1 hover:text-amber-950"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-              {filters.capacite > 1 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-medium text-amber-800 shrink-0">
-                  <Users size={12} />
-                  {filters.capacite} pers.
-                  <button
-                    onClick={() => setFilters((f) => ({ ...f, capacite: 1 }))}
-                    className="ml-1 hover:text-amber-950"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-              {activeFiltersCount === 0 && !loading && (
-                <span className="text-xs text-stone-400">
-                  Aucun filtre actif
-                </span>
-              )}
+                ))}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Sort dropdown */}
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <button
                   onClick={() => setSortOpen(!sortOpen)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-200 text-sm font-medium text-stone-700 hover:border-stone-300 transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-stone-200 text-sm font-medium text-stone-700 hover:border-stone-300 transition-all"
                 >
                   <ArrowUpDown size={14} />
-                  {currentSortLabel}
+                  <span className="hidden sm:inline">{currentSortLabel}</span>
                   <ChevronDown
                     size={14}
                     className={`transition-transform ${sortOpen ? "rotate-180" : ""}`}
@@ -235,10 +243,10 @@ export default function RoomsPage() {
                 <AnimatePresence>
                   {sortOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-stone-200 shadow-xl shadow-stone-900/5 overflow-hidden z-50"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-stone-200 shadow-2xl overflow-hidden z-50"
                     >
                       {SORT_OPTIONS.map((option) => (
                         <button
@@ -247,11 +255,10 @@ export default function RoomsPage() {
                             setSortBy(option.value);
                             setSortOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors ${
-                            sortBy === option.value
-                              ? "bg-amber-50 text-amber-800 font-medium"
+                          className={`w-full text-left px-5 py-3.5 text-sm transition-colors ${sortBy === option.value
+                              ? "bg-amber-50 text-amber-900 font-bold"
                               : "text-stone-600 hover:bg-stone-50"
-                          }`}
+                            }`}
                         >
                           {option.label}
                         </button>
@@ -261,361 +268,266 @@ export default function RoomsPage() {
                 </AnimatePresence>
               </div>
 
-              {/* View toggle */}
-              <div className="flex items-center bg-stone-100 rounded-xl p-1">
+              <div className="flex items-center bg-stone-100 rounded-full p-1 border border-stone-200">
                 <button
                   onClick={() => setView("grid")}
-                  className={`p-2 rounded-lg transition-all ${
-                    view === "grid"
+                  className={`p-2 rounded-full transition-all ${view === "grid"
                       ? "bg-white text-stone-900 shadow-sm"
                       : "text-stone-400 hover:text-stone-600"
-                  }`}
+                    }`}
                 >
                   <Grid size={16} />
                 </button>
                 <button
                   onClick={() => setView("list")}
-                  className={`p-2 rounded-lg transition-all ${
-                    view === "list"
+                  className={`p-2 rounded-full transition-all ${view === "list"
                       ? "bg-white text-stone-900 shadow-sm"
                       : "text-stone-400 hover:text-stone-600"
-                  }`}
+                    }`}
                 >
                   <List size={16} />
                 </button>
               </div>
-
-              {/* Mobile filter toggle */}
-              <button
-                onClick={() => setFiltersOpen(!filtersOpen)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-900 text-white text-sm font-medium"
-              >
-                <SlidersHorizontal size={14} />
-                Filtres
-                {activeFiltersCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── MAIN CONTENT ────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* ── FILTERS SIDEBAR ─────────────────────────────────────── */}
-          <motion.aside
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className={`lg:w-72 space-y-6 ${
-              filtersOpen
-                ? "fixed inset-0 z-40 bg-white p-4 overflow-y-auto lg:static lg:bg-transparent lg:p-0"
-                : "hidden lg:block"
-            }`}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {loading ? (
+          <div
+            className={`grid ${view === "grid"
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1"
+              } gap-8`}
           >
-            {filtersOpen && (
-              <div className="flex items-center justify-between mb-6 lg:hidden">
-                <h2 className="text-xl font-serif font-semibold">Filtres</h2>
-                <button
-                  onClick={() => setFiltersOpen(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            )}
-
-            <div className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm shadow-stone-900/3">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-                  <SlidersHorizontal size={16} className="text-amber-700" />
-                  Filtres avancés
-                </h3>
-                <button
-                  onClick={handleResetFilters}
-                  className="text-xs text-stone-400 hover:text-amber-700 transition-colors font-medium"
-                >
-                  Réinitialiser
-                </button>
-              </div>
-
-              {/* Type */}
-              <div className="mb-8">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-3 block">
-                  Type de chambre
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {TYPES.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setFilters((f) => ({ ...f, type: t }))}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all border ${
-                        filters.type === t
-                          ? "bg-amber-50 border-amber-300 text-amber-800"
-                          : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
-                      }`}
-                    >
-                      {TYPE_LABELS[t]}
-                    </button>
-                  ))}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-[2.5rem] border border-stone-100 overflow-hidden shadow-sm">
+                <div className="aspect-[4/3] bg-stone-100 animate-pulse" />
+                <div className="p-8 space-y-4">
+                  <div className="h-6 bg-stone-100 rounded animate-pulse w-3/4" />
+                  <div className="h-4 bg-stone-100 rounded animate-pulse w-1/2" />
+                  <div className="pt-4 h-12 bg-stone-100 rounded animate-pulse w-full" />
                 </div>
               </div>
+            ))}
+          </div>
+        ) : rooms.length > 0 ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${filters.type}-${page}-${sortBy}-${view}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className={`grid ${view === "grid"
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+                } gap-8`}
+            >
+              {rooms.map((room, i) => (
+                <RoomCard
+                  key={room.id}
+                  chambre={room}
+                  dateArrivee={filters.dateArrivee}
+                  dateDepart={filters.dateDepart}
+                  index={i}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[3rem] border border-stone-200 p-20 text-center shadow-sm"
+          >
+            <div className="w-20 h-20 rounded-full bg-stone-50 flex items-center justify-center mx-auto mb-6 border border-stone-100">
+              <Search size={32} className="text-stone-300" />
+            </div>
+            <h3 className="font-serif text-2xl text-stone-900 mb-3">
+              Aucune chambre trouvée
+            </h3>
+            <p className="text-stone-500 mb-10 max-w-md mx-auto leading-relaxed">
+              Nous n'avons pas trouvé de chambres correspondant à vos critères actuels.
+              Essayez de modifier vos filtres ou vos dates.
+            </p>
+            <button
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white rounded-full font-bold text-sm hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20"
+            >
+              Réinitialiser les filtres
+            </button>
+          </motion.div>
+        )}
 
-              {/* Prix */}
-              <div className="mb-8">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-4 block">
-                  Fourchette de prix
-                </label>
-                <div className="px-1">
+        {/* Pagination */}
+        {totalPages > 1 && rooms.length > 0 && (
+          <div className="flex items-center justify-center gap-3 mt-20">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-12 h-12 rounded-full border border-stone-200 flex items-center justify-center transition-all hover:bg-white hover:border-stone-900 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronDown className="rotate-90" size={20} />
+            </button>
+
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`w-12 h-12 rounded-full text-sm font-bold transition-all ${page === i
+                    ? "bg-stone-900 text-white shadow-xl scale-110"
+                    : "bg-white text-stone-400 border border-stone-100 hover:border-stone-300 hover:text-stone-900"
+                  }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+              className="w-12 h-12 rounded-full border border-stone-200 flex items-center justify-center transition-all hover:bg-white hover:border-stone-900 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronDown className="-rotate-90" size={20} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── FILTER DRAWER (Mobile & Overlay) ───────────────────────── */}
+      <AnimatePresence>
+        {filtersOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFiltersOpen(false)}
+              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[101] shadow-2xl p-8 overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="font-serif text-2xl">Affiner la recherche</h2>
+                <button onClick={() => setFiltersOpen(false)} className="p-2 rounded-full hover:bg-stone-100">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-10">
+                {/* Type */}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-4 block">Type de séjour</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {TYPES.map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setFilters((f) => ({ ...f, type: t }))}
+                        className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${filters.type === t
+                            ? "bg-stone-900 border-stone-900 text-white shadow-lg"
+                            : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
+                          }`}
+                      >
+                        {TYPE_LABELS[t]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-4 block">Dates</label>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-stone-500">Arrivée</span>
+                      <input
+                        type="date"
+                        className="w-full px-5 py-4 rounded-2xl border border-stone-200 text-sm font-medium focus:outline-none focus:border-amber-500"
+                        value={filters.dateArrivee}
+                        onChange={(e) => setFilters(f => ({ ...f, dateArrivee: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-stone-500">Départ</span>
+                      <input
+                        type="date"
+                        className="w-full px-5 py-4 rounded-2xl border border-stone-200 text-sm font-medium focus:outline-none focus:border-amber-500"
+                        value={filters.dateDepart}
+                        onChange={(e) => setFilters(f => ({ ...f, dateDepart: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Prix */}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-6 block">Budget par nuit</label>
                   <input
                     type="range"
                     min={0}
                     max={2000}
                     step={50}
                     value={filters.prixMax}
-                    onChange={(e) =>
-                      setFilters((f) => ({
-                        ...f,
-                        prixMax: Number(e.target.value),
-                      }))
-                    }
-                    className="w-full h-1.5 bg-stone-200 rounded-full appearance-none cursor-pointer accent-amber-700"
+                    onChange={(e) => setFilters(f => ({ ...f, prixMax: Number(e.target.value) }))}
+                    className="w-full h-1.5 bg-stone-100 rounded-full appearance-none cursor-pointer accent-amber-600 mb-4"
                   />
-                  <div className="flex justify-between mt-3 text-xs font-medium text-stone-500">
-                    <span className="px-2.5 py-1 rounded-lg bg-stone-100">
-                      {filters.prixMin}€
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-stone-400">0€</span>
+                    <span className="px-5 py-2 bg-amber-50 text-amber-700 rounded-xl font-bold text-sm border border-amber-100">
+                      Jusqu'à {filters.prixMax}€
                     </span>
-                    <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800">
-                      {filters.prixMax}€
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-2 text-[10px] text-stone-400">
-                    <span>0€</span>
-                    <span>1000€</span>
-                    <span>2000€</span>
+                    <span className="text-sm font-bold text-stone-400">2000€</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Capacité */}
-              <div className="mb-8">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-3 block">
-                  Voyageurs
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() =>
-                        setFilters((f) => ({ ...f, capacite: n }))
-                      }
-                      className={`flex-1 h-11 rounded-xl text-sm font-medium border transition-all ${
-                        filters.capacite === n
-                          ? "bg-amber-50 border-amber-300 text-amber-800"
-                          : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="space-y-4 mb-8">
+                {/* Voyageurs */}
                 <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2 block">
-                    Arrivée
-                  </label>
-                  <div className="relative">
-                    <Calendar
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
-                    />
-                    <input
-                      type="date"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-stone-200 text-sm text-stone-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all bg-white"
-                      value={filters.dateArrivee}
-                      onChange={(e) =>
-                        setFilters((f) => ({
-                          ...f,
-                          dateArrivee: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2 block">
-                    Départ
-                  </label>
-                  <div className="relative">
-                    <Calendar
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
-                    />
-                    <input
-                      type="date"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-stone-200 text-sm text-stone-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all bg-white"
-                      value={filters.dateDepart}
-                      onChange={(e) =>
-                        setFilters((f) => ({
-                          ...f,
-                          dateDepart: e.target.value,
-                        }))
-                      }
-                    />
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-4 block">Nombre de personnes</label>
+                  <div className="flex gap-3">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setFilters(f => ({ ...f, capacite: n }))}
+                        className={`w-12 h-12 rounded-2xl text-sm font-bold transition-all border ${filters.capacite === n
+                            ? "bg-stone-900 border-stone-900 text-white shadow-lg"
+                            : "bg-white border-stone-200 text-stone-600 hover:border-stone-300"
+                          }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={handleApplyFilters}
-                className="w-full py-3 bg-stone-900 text-white rounded-xl font-medium text-sm hover:bg-stone-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                <Search size={14} />
-                Appliquer les filtres
-              </button>
-            </div>
-          </motion.aside>
-
-          {/* ── ROOMS GRID ──────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0">
-            {loading ? (
-              <div
-                className={`grid ${
-                  view === "grid"
-                    ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                    : "grid-cols-1"
-                } gap-6`}
-              >
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-2xl border border-stone-100 overflow-hidden"
-                  >
-                    <div className="aspect-[4/3] bg-stone-200 animate-pulse" />
-                    <div className="p-5 space-y-3">
-                      <div className="h-4 bg-stone-200 rounded animate-pulse w-3/4" />
-                      <div className="h-3 bg-stone-200 rounded animate-pulse w-1/2" />
-                      <div className="h-8 bg-stone-200 rounded animate-pulse w-1/3 mt-4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : rooms.length > 0 ? (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${filters.type}-${page}-${sortBy}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className={`grid ${
-                    view === "grid"
-                      ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                      : "grid-cols-1"
-                  } gap-6`}
+              <div className="mt-12 space-y-4">
+                <button
+                  onClick={handleApplyFilters}
+                  className="w-full py-5 bg-amber-600 text-white rounded-3xl font-bold text-sm hover:bg-amber-700 transition-all shadow-xl shadow-amber-600/20 active:scale-[0.98]"
                 >
-                  {rooms.map((room, i) => (
-                    <RoomCard
-                      key={room.id}
-                      chambre={room}
-                      dateArrivee={filters.dateArrivee}
-                      dateDepart={filters.dateDepart}
-                      index={i}
-                    />
-                  ))}
-                </motion.div>
-              </AnimatePresence>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-stone-200 p-16 text-center"
-              >
-                <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
-                  <Search size={24} className="text-stone-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-stone-900 mb-2">
-                  Aucune chambre trouvée
-                </h3>
-                <p className="text-stone-500 text-sm mb-6 max-w-md mx-auto">
-                  Aucune chambre ne correspond à vos critères actuels. Essayez
-                  d'élargir votre recherche ou de modifier les filtres.
-                </p>
+                  Appliquer les filtres
+                </button>
                 <button
                   onClick={handleResetFilters}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-amber-50 text-amber-800 rounded-xl font-medium text-sm border border-amber-200 hover:bg-amber-100 transition-colors"
+                  className="w-full py-4 text-stone-400 font-bold text-xs uppercase tracking-widest hover:text-stone-900 transition-colors"
                 >
-                  <X size={14} />
-                  Réinitialiser les filtres
-                </button>
-              </motion.div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && rooms.length > 0 && (
-              <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
-                <button
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                    page === 0
-                      ? "border-stone-200 text-stone-300 cursor-not-allowed"
-                      : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-                  }`}
-                >
-                  ‹
-                </button>
-
-                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                  let pageNum = i;
-                  if (totalPages > 5 && page > 2) {
-                    pageNum = page - 2 + i;
-                    if (pageNum >= totalPages)
-                      pageNum = totalPages - 5 + i;
-                  }
-                  if (pageNum >= 0 && pageNum < totalPages) {
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setPage(pageNum)}
-                        className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                          page === pageNum
-                            ? "bg-stone-900 border-stone-900 text-white"
-                            : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-                        }`}
-                      >
-                        {pageNum + 1}
-                      </button>
-                    );
-                  }
-                  return null;
-                })}
-
-                <button
-                  onClick={() =>
-                    setPage((p) => Math.min(totalPages - 1, p + 1))
-                  }
-                  disabled={page === totalPages - 1}
-                  className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
-                    page === totalPages - 1
-                      ? "border-stone-200 text-stone-300 cursor-not-allowed"
-                      : "border-stone-300 text-stone-600 hover:border-stone-400 hover:bg-stone-50"
-                  }`}
-                >
-                  ›
+                  Tout réinitialiser
                 </button>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <Footer />
     </div>
   );
 }

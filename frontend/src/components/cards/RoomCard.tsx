@@ -1,11 +1,16 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Star, Users, Wifi, Wind, Coffee, Bath, ArrowRight } from "lucide-react";
+import { Star, Users, Wifi, Wind, Coffee, Bath, ArrowRight, MapPin, BedDouble } from "lucide-react";
 import type { Chambre } from "@/types";
 
-const equipmentIcons: Record<string, typeof Wifi> = {
-  wifi: Wifi, climatisation: Wind, café: Coffee, bain: Bath,
+const equipmentIcons: Record<string, any> = {
+  wifi: Wifi, 
+  climatisation: Wind, 
+  café: Coffee, 
+  bain: Bath,
+  "petit-déjeuner": Coffee,
+  "vue mer": MapPin,
 };
 
 interface RoomCardProps {
@@ -17,8 +22,11 @@ interface RoomCardProps {
 
 export default function RoomCard({ chambre, dateArrivee, dateDepart, index = 0 }: RoomCardProps) {
   const typeLabels: Record<string, string> = {
-    SIMPLE: "Chambre Simple", DOUBLE: "Chambre Double",
-    SUITE: "Suite", PENTHOUSE: "Penthouse", FAMILIALE: "Familiale",
+    SIMPLE: "Chambre Simple", 
+    DOUBLE: "Chambre Double",
+    SUITE: "Suite Exclusive", 
+    PENTHOUSE: "Penthouse Royal", 
+    FAMILIALE: "Suite Familiale",
   };
 
   const params = new URLSearchParams();
@@ -29,96 +37,94 @@ export default function RoomCard({ chambre, dateArrivee, dateDepart, index = 0 }
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      whileHover={{ y: -4 }}
-      className="glass-card overflow-hidden group cursor-pointer"
+      transition={{ duration: 0.6, delay: index * 0.05 }}
+      whileHover={{ y: -10 }}
+      className="bg-white rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-2xl transition-all duration-500 border border-stone-100"
     >
-      {/* Image placeholder */}
-      <div className="relative h-52 overflow-hidden">
-        {chambre.imageUrl ? (
-          <img
-            src={chambre.imageUrl}
-            alt={`Chambre ${chambre.numero}`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #1E1B18 0%, #2A2520 100%)" }}
-          >
-            <div className="text-center">
-              <div className="font-display text-4xl text-gold-800 mb-1">{chambre.numero}</div>
-              <div className="text-night-500 text-sm">{typeLabels[chambre.type] || chambre.type}</div>
+      <Link href={`/rooms/${chambre.id}?${params}`} className="block">
+        {/* Image Container */}
+        <div className="relative h-72 overflow-hidden">
+          {chambre.imageUrl ? (
+            <img
+              src={chambre.imageUrl}
+              alt={`Chambre ${chambre.numero}`}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full bg-stone-100 flex items-center justify-center">
+              <BedDouble size={48} className="text-stone-300" />
+            </div>
+          )}
+          
+          {/* Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+          
+          {/* Price Tag */}
+          <div className="absolute bottom-6 left-6 text-white">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-1">À partir de</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-serif font-bold">{chambre.prixParNuit}€</span>
+              <span className="text-xs opacity-70">/ nuit</span>
             </div>
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-night-950/60 to-transparent" />
 
-        {/* Type badge */}
-        <div
-          className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium"
-          style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#FBBF24" }}
-        >
-          {typeLabels[chambre.type] || chambre.type}
+          {/* Type Badge */}
+          <div className="absolute top-6 left-6 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest text-white">
+            {typeLabels[chambre.type] || chambre.type}
+          </div>
+
+          {/* Rating */}
+          <div className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 bg-stone-900/40 backdrop-blur-md rounded-full border border-white/10">
+            <Star size={12} className="text-amber-400 fill-amber-400" />
+            <span className="text-white text-xs font-bold">4.9</span>
+          </div>
         </div>
 
-        {/* Rating */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <Star size={11} className="text-gold-400 fill-gold-400" />
-          <span className="text-white text-xs">4.8</span>
-        </div>
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h3 className="font-display text-xl font-semibold text-night-50 mb-1">
+        {/* Content */}
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-serif text-2xl text-stone-900 group-hover:text-amber-700 transition-colors">
               Chambre {chambre.numero}
             </h3>
-            <div className="flex items-center gap-1.5 text-night-400 text-sm">
-              <Users size={13} />
-              <span>Jusqu&apos;à {chambre.capacite} personne{chambre.capacite > 1 ? "s" : ""}</span>
+            <div className="flex items-center gap-1.5 text-stone-400 text-sm font-medium">
+              <Users size={14} />
+              <span>{chambre.capacite} pers.</span>
             </div>
           </div>
-          <div className="text-right">
-            <div className="font-display text-2xl font-semibold text-gold-400">
-              {chambre.prixParNuit}€
-            </div>
-            <div className="text-night-500 text-xs">/ nuit</div>
-          </div>
-        </div>
 
-        {chambre.description && (
-          <p className="text-night-400 text-sm leading-relaxed mb-4 line-clamp-2">{chambre.description}</p>
-        )}
+          <p className="text-stone-500 text-sm leading-relaxed mb-6 line-clamp-2 font-light">
+            {chambre.description || "Un espace de raffinement absolu offrant une vue imprenable et des équipements de première classe pour un séjour inoubliable."}
+          </p>
 
-        {/* Equipements */}
-        {chambre.equipements && chambre.equipements.length > 0 && (
-          <div className="flex items-center gap-2 mb-5">
-            {chambre.equipements.slice(0, 4).map((eq) => {
+          {/* Equipments */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {chambre.equipements?.slice(0, 3).map((eq) => {
               const Icon = equipmentIcons[eq.toLowerCase()] || Wifi;
               return (
                 <div
                   key={eq}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-night-300"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-50 border border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400"
                 >
-                  <Icon size={11} className="text-night-400" />
+                  <Icon size={12} />
                   {eq}
                 </div>
               );
             })}
+            {chambre.equipements && chambre.equipements.length > 3 && (
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-stone-50 border border-stone-100 text-[10px] font-bold text-stone-400">
+                +{chambre.equipements.length - 3}
+              </div>
+            )}
           </div>
-        )}
 
-        <Link
-          href={`/rooms/${chambre.id}?${params}`}
-          className="btn-gold w-full justify-center py-3 text-sm group"
-        >
-          Voir & Réserver
-          <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-        </Link>
-      </div>
+          <div className="pt-6 border-t border-stone-50 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Voir les détails</span>
+            <div className="w-10 h-10 rounded-full bg-stone-900 text-white flex items-center justify-center transition-transform group-hover:translate-x-2 group-hover:bg-amber-600">
+              <ArrowRight size={18} />
+            </div>
+          </div>
+        </div>
+      </Link>
     </motion.div>
   );
 }

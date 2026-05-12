@@ -22,6 +22,7 @@ import {
   Navigation,
   Globe,
   Wind,
+  Tag,
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
@@ -37,17 +38,17 @@ const TRANSPORT_ICONS = {
 };
 
 const TRANSPORT_LABELS = {
-  TRAIN: "Chemin de Fer",
-  AVION: "Lignes Aériennes",
-  BUS: "Transport Routier",
-  BATEAU: "Lignes Maritimes",
+  TRAIN: "Ligne de Chemin de Fer",
+  AVION: "Liaison Aérienne",
+  BUS: "Ligne de Transport Routier",
+  BATEAU: "Navigation Maritime",
 };
 
 const TRANSPORT_META = {
-  TRAIN: { label: "Rail Premium", detail: "Confort & Vitesse" },
-  AVION: { label: "First Class", detail: "L'excellence en vol" },
+  TRAIN: { label: "Rail Premium", detail: "Vitesse & Confort" },
+  AVION: { label: "First Class", detail: "Excellence en Vol" },
   BUS: { label: "Business Class", detail: "Luxe & Mobilité" },
-  BATEAU: { label: "Grand Voyage", detail: "Sérénité en mer" },
+  BATEAU: { label: "Grand Voyage", detail: "Sérénité en Mer" },
 };
 
 export default function TransportPage() {
@@ -69,15 +70,18 @@ export default function TransportPage() {
   const fetchTrajets = useCallback(async () => {
     setLoading(true);
     try {
+      // Prioritize the data format provided by the user: { content: [...] }
       const response = await trajetApi.get({ page, size: 50 });
       const data = response.data;
+      
       if (data && Array.isArray(data.content)) {
         setAllTrajets(data.content);
       } else if (Array.isArray(data)) {
         setAllTrajets(data);
       }
     } catch (error) {
-      toast.error("Erreur de chargement");
+      console.error("Fetch error:", error);
+      toast.error("Erreur de connexion au serveur de données");
     } finally {
       setLoading(false);
     }
@@ -90,9 +94,15 @@ export default function TransportPage() {
   const filtered = useMemo(() => {
     return allTrajets.filter((t) => {
       if (search.type !== "Tous" && t.typeTransport !== search.type) return false;
-      if (search.depart && !t.lieuDepart.toLowerCase().includes(search.depart.toLowerCase())) return false;
-      if (search.arrivee && !t.lieuArrivee.toLowerCase().includes(search.arrivee.toLowerCase())) return false;
-      if (search.date && !isSameDay(new Date(t.dateDepart), parseISO(search.date))) return false;
+      if (search.depart && !t.lieuDepart.toLowerCase().includes(search.depart.toLowerCase().trim())) return false;
+      if (search.arrivee && !t.lieuArrivee.toLowerCase().includes(search.arrivee.toLowerCase().trim())) return false;
+      if (search.date) {
+        try {
+          const tDate = new Date(t.dateDepart);
+          const sDate = parseISO(search.date);
+          if (!isSameDay(tDate, sDate)) return false;
+        } catch (e) { return false; }
+      }
       if (t.placesDisponibles < search.places) return false;
       return true;
     });
@@ -118,13 +128,13 @@ export default function TransportPage() {
           >
             <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-amber-800">
               <Globe size={12} />
-              Évasion Exclusive
+              DESTINATIONS EXCLUSIVES
             </span>
             <h1 className="font-serif text-5xl md:text-7xl font-light leading-tight text-stone-900">
               L&apos;Art du <span className="italic text-amber-800 underline decoration-amber-100 underline-offset-8">Mouvement</span>
             </h1>
             <p className="max-w-2xl mx-auto text-stone-400 font-medium text-lg leading-relaxed">
-              Découvrez notre sélection de trajets d&apos;exception. Des liaisons aériennes privées aux transferts routiers business class, voyagez avec distinction.
+              Explorez nos liaisons premium. De la simplicité du rail à l&apos;exclusivité des lignes aériennes privées.
             </p>
           </motion.div>
         </div>
@@ -139,13 +149,13 @@ export default function TransportPage() {
           className="bg-white rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.08)] border border-stone-100 p-3"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-stone-50 border border-transparent hover:border-stone-200 transition-all group">
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-stone-50 border border-transparent hover:border-stone-200 transition-all">
               <MapPin size={18} className="text-amber-800" />
               <div className="flex-1">
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Origine</p>
                 <input 
                   type="text" 
-                  placeholder="D&apos;où partez-vous ?"
+                  placeholder="Ville de départ"
                   className="bg-transparent w-full text-sm font-bold text-stone-900 focus:outline-none placeholder:text-stone-300"
                   value={search.depart}
                   onChange={(e) => setSearch(s => ({ ...s, depart: e.target.value }))}
@@ -159,7 +169,7 @@ export default function TransportPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Destination</p>
                 <input 
                   type="text" 
-                  placeholder="Où allez-vous ?"
+                  placeholder="Ville d'arrivée"
                   className="bg-transparent w-full text-sm font-bold text-stone-900 focus:outline-none placeholder:text-stone-300"
                   value={search.arrivee}
                   onChange={(e) => setSearch(s => ({ ...s, arrivee: e.target.value }))}
@@ -203,7 +213,7 @@ export default function TransportPage() {
                     : "bg-white text-stone-400 border-stone-100 hover:border-amber-200 hover:text-amber-800"
                 }`}
               >
-                {t === "Tous" ? "Toutes les lignes" : TRANSPORT_LABELS[t as keyof typeof TRANSPORT_LABELS]}
+                {t === "Tous" ? "Toutes les lignes" : (TRANSPORT_LABELS[t as keyof typeof TRANSPORT_LABELS] || t)}
               </button>
             );
           })}
@@ -212,84 +222,97 @@ export default function TransportPage() {
 
       {/* ── TRANSPORT LISTING ───────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((t, i) => {
-              const Icon = TRANSPORT_ICONS[t.typeTransport] || Train;
-              const meta = TRANSPORT_META[t.typeTransport] || TRANSPORT_META.TRAIN;
-              const dateDepart = new Date(t.dateDepart);
-              const dateArrivee = new Date(t.dateArrivee);
-              
-              return (
-                <motion.div
-                  key={t.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.05, duration: 0.5 }}
-                  onClick={() => router.push(`/transport/${t.id}?places=${search.places}`)}
-                  className="group relative bg-white rounded-[2.5rem] border border-stone-100 p-8 cursor-pointer hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.06)] hover:border-amber-100 transition-all duration-500"
-                >
-                  <div className="flex justify-between items-start mb-12">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-900 group-hover:bg-amber-800 group-hover:text-white group-hover:scale-110 transition-all duration-500 shadow-sm">
-                        <Icon size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-serif text-xl font-bold text-stone-900">{meta.label}</h3>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">{meta.detail}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">À partir de</p>
-                      <p className="text-3xl font-serif font-light text-stone-900">{t.prixParPlace.toFixed(0)}<span className="text-base italic text-amber-800">€</span></p>
-                    </div>
-                  </div>
-
-                  <div className="relative flex items-center justify-between gap-6 mb-12">
-                    <div className="text-left flex-1">
-                      <p className="text-3xl font-serif font-bold text-stone-900">{format(dateDepart, "HH:mm")}</p>
-                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuDepart}</p>
-                    </div>
-
-                    <div className="flex-1 flex flex-col items-center gap-2 relative">
-                      <div className="w-full h-[2px] bg-stone-50 flex items-center justify-center relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-1000" />
-                        <div className="w-8 h-8 rounded-full bg-white border border-stone-50 flex items-center justify-center z-10 shadow-sm group-hover:rotate-[360deg] transition-transform duration-1000">
-                          <Wind size={14} className="text-amber-800" />
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-white rounded-[2.5rem] border border-stone-100 p-8 h-[300px] animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((t, i) => {
+                const Icon = TRANSPORT_ICONS[t.typeTransport as keyof typeof TRANSPORT_ICONS] || Train;
+                const meta = TRANSPORT_META[t.typeTransport as keyof typeof TRANSPORT_META] || { label: t.typeTransport, detail: "Standard Class" };
+                const dateDepart = new Date(t.dateDepart);
+                const dateArrivee = new Date(t.dateArrivee);
+                
+                return (
+                  <motion.div
+                    key={t.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: i * 0.05, duration: 0.5 }}
+                    onClick={() => router.push(`/transport/${t.id}?places=${search.places}`)}
+                    className="group relative bg-white rounded-[2.5rem] border border-stone-100 p-8 cursor-pointer hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.06)] hover:border-amber-100 transition-all duration-500"
+                  >
+                    <div className="flex justify-between items-start mb-12">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-900 group-hover:bg-amber-800 group-hover:text-white group-hover:scale-110 transition-all duration-500 shadow-sm">
+                          <Icon size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-serif text-xl font-bold text-stone-900">{meta.label}</h3>
+                          <div className="flex items-center gap-2">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">{meta.detail}</p>
+                             {t.numeroVehicule && (
+                               <span className="text-[8px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-mono font-bold">{t.numeroVehicule}</span>
+                             )}
+                          </div>
                         </div>
                       </div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400">Direct Voyage</p>
-                    </div>
-
-                    <div className="text-right flex-1">
-                      <p className="text-3xl font-serif font-bold text-stone-900">{format(dateArrivee, "HH:mm")}</p>
-                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuArrivee}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-8 border-t border-dashed border-stone-100">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 text-stone-400">
-                        <Users size={12} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{t.placesDisponibles} places</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-stone-400">
-                        <Clock size={12} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Temps réel</span>
+                      <div className="text-right">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Passage</p>
+                        <p className="text-3xl font-serif font-light text-stone-900">{t.prixParPlace.toFixed(0)}<span className="text-base italic text-amber-800">€</span></p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-amber-800 group-hover:translate-x-2 transition-transform">
-                      <span className="text-[10px] font-black uppercase tracking-widest">Réserver</span>
-                      <ArrowRight size={14} />
+
+                    <div className="relative flex items-center justify-between gap-6 mb-12">
+                      <div className="text-left flex-1">
+                        <p className="text-3xl font-serif font-bold text-stone-900">{format(dateDepart, "HH:mm")}</p>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuDepart}</p>
+                      </div>
+
+                      <div className="flex-1 flex flex-col items-center gap-2 relative">
+                        <div className="w-full h-[2px] bg-stone-50 flex items-center justify-center relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-1000" />
+                          <div className="w-8 h-8 rounded-full bg-white border border-stone-50 flex items-center justify-center z-10 shadow-sm group-hover:rotate-[360deg] transition-transform duration-1000">
+                            <Wind size={14} className="text-amber-800" />
+                          </div>
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400">Direct Express</p>
+                      </div>
+
+                      <div className="text-right flex-1">
+                        <p className="text-3xl font-serif font-bold text-stone-900">{format(dateArrivee, "HH:mm")}</p>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest truncate">{t.lieuArrivee}</p>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+
+                    <div className="flex items-center justify-between pt-8 border-t border-dashed border-stone-100">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-stone-400">
+                          <Users size={12} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{t.placesDisponibles} places</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-stone-400">
+                          <Tag size={12} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">ID:{t.id.slice(0, 5).toUpperCase()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-amber-800 group-hover:translate-x-2 transition-transform">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Explorer</span>
+                        <ArrowRight size={14} />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
 
         {filtered.length === 0 && !loading && (
           <motion.div 
@@ -301,7 +324,7 @@ export default function TransportPage() {
               <Search size={32} className="text-stone-200" />
             </div>
             <h3 className="font-serif text-2xl text-stone-900 mb-2">Aucun itinéraire trouvé</h3>
-            <p className="text-stone-400 max-w-sm mx-auto">Veuillez ajuster vos critères de recherche pour découvrir d&apos;autres destinations.</p>
+            <p className="text-stone-400 max-w-sm mx-auto">Veuillez ajuster vos filtres pour découvrir nos lignes disponibles.</p>
           </motion.div>
         )}
       </main>
