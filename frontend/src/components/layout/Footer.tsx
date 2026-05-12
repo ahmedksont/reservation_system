@@ -4,13 +4,14 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10 mb-10">
         <div className="md:col-span-1">
           <div className="flex items-center gap-3 mb-4">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #F59E0B, #FBBF24)" }}
-            >
-              <span className="text-night-950 font-display font-bold">L</span>
+            <div className="relative w-8 h-8 flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="LuxeStay Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="font-display text-lg text-night-50">LuxeStay</span>
+            <span className="font-serif text-lg font-bold text-white tracking-tight">LuxeStay</span>
           </div>
           <p className="text-night-500 text-sm leading-relaxed">
             Votre partenaire de voyage premium. Hôtels et transports de luxe,

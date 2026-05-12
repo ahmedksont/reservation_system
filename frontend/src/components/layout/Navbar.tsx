@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Hotel, Train, Calendar, User, LogOut, Menu, X, ChevronDown, Shield } from "lucide-react";
+import { Hotel, Train, Calendar, User, LogOut, Menu, X, ChevronDown, Shield, MapPin } from "lucide-react";
+import Image from "next/image";
 import { useAuthStore } from "@/store/authStore";
 
 export default function Navbar() {
@@ -19,8 +20,8 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: "/rooms",     label: "Hôtels",     icon: Hotel },
-    { href: "/transport", label: "Transports",  icon: Train },
+    { href: "/rooms", label: "Hôtels", icon: Hotel },
+    { href: "/transport", label: "Transports", icon: Train },
     { href: "/reservations", label: "Mes réservations", icon: Calendar, auth: true },
   ];
 
@@ -29,22 +30,32 @@ export default function Navbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "backdrop-blur-xl bg-white/90 border-b border-stone-200/60 shadow-sm shadow-stone-900/5"
-          : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? "backdrop-blur-xl bg-white/90 border-b border-stone-200/60 shadow-sm shadow-stone-900/5"
+        : "bg-transparent"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-amber-500 to-amber-600 shadow-sm shadow-amber-500/20">
-              <span className="text-white font-serif font-bold text-lg">L</span>
+          <Link href="/" className="flex items-center gap-4 group">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <Image
+                src="/logo.png"
+                alt="LuxeStay Logo"
+                fill
+                className="object-contain transition-transform duration-500 group-hover:scale-110"
+                priority
+              />
             </div>
-            <div className="flex items-baseline">
-              <span className="font-serif text-xl font-semibold text-stone-900">LuxeStay</span>
-              <span className="text-amber-600 font-serif text-xl"> & Transit</span>
+            <div className="flex flex-col">
+              <div className="flex items-baseline leading-none">
+                <span className="font-serif text-2xl font-bold tracking-tight text-stone-900">LuxeStay</span>
+                <span className="text-amber-600 font-serif text-2xl font-bold tracking-tight">&nbsp;&Transit</span>
+              </div>
+              <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-stone-400 mt-1">
+                Stay Beyond Horizons
+              </span>
             </div>
           </Link>
 

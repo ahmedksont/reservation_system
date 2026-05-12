@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import Preloader from "@/components/ui/Preloader";
 
 export const metadata: Metadata = {
   title: "LuxeStay & Transit — Réservation Premium",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
         <AuthProvider>
+          <Preloader />
           {children}
           <Toaster
             position="top-right"

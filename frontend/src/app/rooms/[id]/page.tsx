@@ -79,7 +79,7 @@ export default function RoomDetailPage() {
   const id = params.id as string;
 
   // Mock additional images for gallery if not provided by backend
-  const galleryImages = room?.imageUrl 
+  const galleryImages = room?.imageUrl
     ? [room.imageUrl, "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=1000", "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=1000"]
     : ["https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=1000"];
 
@@ -171,7 +171,7 @@ export default function RoomDetailPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <button 
+              <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 text-stone-400 hover:text-stone-900 transition-colors mb-6 text-xs font-bold uppercase tracking-widest"
               >
@@ -196,19 +196,15 @@ export default function RoomDetailPage() {
                   <MapPin size={16} />
                   <span>Étage {room.etage}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Users size={16} />
-                  <span>{room.capacite} Voyageurs</span>
-                </div>
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
-              <button 
+              <button
                 onClick={() => setIsLiked(!isLiked)}
                 className={`w-12 h-12 rounded-full border border-stone-200 flex items-center justify-center transition-all ${isLiked ? "bg-red-50 border-red-100 text-red-500" : "hover:bg-white hover:border-stone-400 text-stone-400"}`}
               >
@@ -221,7 +217,7 @@ export default function RoomDetailPage() {
           </div>
 
           {/* Gallery */}
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -241,7 +237,7 @@ export default function RoomDetailPage() {
                 />
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent" />
-              
+
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                 {galleryImages.map((_, i) => (
                   <button
@@ -252,13 +248,13 @@ export default function RoomDetailPage() {
                 ))}
               </div>
 
-              <button 
+              <button
                 onClick={() => setActiveImage((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
                 className="absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20"
               >
                 <ChevronLeft size={24} />
               </button>
-              <button 
+              <button
                 onClick={() => setActiveImage((prev) => (prev + 1) % galleryImages.length)}
                 className="absolute right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20"
               >
@@ -338,7 +334,7 @@ export default function RoomDetailPage() {
             >
               <div className="bg-white rounded-[3rem] border border-stone-100 shadow-2xl p-10 relative overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-2 bg-amber-500" />
-                
+
                 <div className="flex items-baseline justify-between mb-10">
                   <div className="flex items-baseline gap-1">
                     <span className="font-serif text-4xl font-bold text-stone-900">{room.prixParNuit}€</span>
@@ -354,8 +350,8 @@ export default function RoomDetailPage() {
                   <div className="grid grid-cols-2 gap-px bg-stone-200 rounded-3xl border border-stone-200 overflow-hidden">
                     <div className="bg-white p-5 space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Arrivée</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={selectedDates.dateArrivee}
                         onChange={(e) => setSelectedDates(d => ({ ...d, dateArrivee: e.target.value }))}
                         className="w-full text-sm font-bold focus:outline-none bg-transparent"
@@ -363,8 +359,8 @@ export default function RoomDetailPage() {
                     </div>
                     <div className="bg-white p-5 space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Départ</label>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={selectedDates.dateDepart}
                         onChange={(e) => setSelectedDates(d => ({ ...d, dateDepart: e.target.value }))}
                         className="w-full text-sm font-bold focus:outline-none bg-transparent"
@@ -372,17 +368,10 @@ export default function RoomDetailPage() {
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-3xl border border-stone-200 space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Voyageurs</label>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold">{room.capacite} Adultes</span>
-                      <ChevronRight size={16} className="text-stone-400" />
-                    </div>
-                  </div>
                 </div>
 
                 {nights > 0 && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     className="mb-10 space-y-4 pt-6 border-t border-stone-50"
@@ -405,11 +394,10 @@ export default function RoomDetailPage() {
                 <button
                   onClick={handleReserve}
                   disabled={!room.disponible}
-                  className={`w-full py-5 rounded-2xl font-bold text-sm transition-all shadow-xl active:scale-[0.98] ${
-                    !room.disponible 
-                      ? "bg-stone-100 text-stone-400 cursor-not-allowed" 
+                  className={`w-full py-5 rounded-2xl font-bold text-sm transition-all shadow-xl active:scale-[0.98] ${!room.disponible
+                      ? "bg-stone-100 text-stone-400 cursor-not-allowed"
                       : "bg-stone-900 text-white hover:bg-amber-600 shadow-stone-900/20"
-                  }`}
+                    }`}
                 >
                   {room.disponible ? "Réserver maintenant" : "Indisponible"}
                 </button>
