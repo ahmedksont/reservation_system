@@ -1,6 +1,7 @@
 package com.reservation.service;
 
 import com.reservation.entity.Reservation;
+import com.reservation.entity.LigneReservation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -22,10 +24,16 @@ public class EmailService {
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
 
+    @Value("${app.email.from:noreply@luxestay-transit.com}")
+    private String fromEmail;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+
     @Async
     public void envoyerConfirmationReservation(String email, Reservation reservation) {
         if (!emailEnabled) {
-            log.info("📧 Email désactivé (dev) - Confirmation réservation #{} pour {}",
+            log.info("Email desactive (dev) - Confirmation reservation #{} pour {}",
                     reservation.getId().substring(0, 8), email);
             return;
         }
@@ -33,20 +41,21 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(email);
-            helper.setSubject("✅ Confirmation de votre réservation #" + reservation.getId().substring(0, 8).toUpperCase());
+            helper.setSubject("Confirmation de votre reservation #" + reservation.getId().substring(0, 8).toUpperCase());
             helper.setText(buildConfirmationHtml(reservation), true);
             mailSender.send(message);
-            log.info("Email de confirmation envoyé à {}", email);
+            log.info("Email de confirmation envoye a {}", email);
         } catch (MessagingException e) {
-            log.error("Erreur envoi email confirmation", e);
+            log.error("Erreur envoi email confirmation: {}", e.getMessage());
         }
     }
 
     @Async
     public void envoyerConfirmationPaiement(String email, Reservation reservation) {
         if (!emailEnabled) {
-            log.info("📧 Email désactivé (dev) - Confirmation paiement #{} pour {}",
+            log.info("Email desactive (dev) - Confirmation paiement #{} pour {}",
                     reservation.getId().substring(0, 8), email);
             return;
         }
@@ -54,20 +63,21 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(email);
-            helper.setSubject("💳 Paiement confirmé - Réservation #" + reservation.getId().substring(0, 8).toUpperCase());
+            helper.setSubject("Paiement confirme - Reservation #" + reservation.getId().substring(0, 8).toUpperCase());
             helper.setText(buildPaiementConfirmationHtml(reservation), true);
             mailSender.send(message);
-            log.info("Email de confirmation de paiement envoyé à {}", email);
+            log.info("Email de confirmation de paiement envoye a {}", email);
         } catch (MessagingException e) {
-            log.error("Erreur envoi email confirmation paiement", e);
+            log.error("Erreur envoi email confirmation paiement: {}", e.getMessage());
         }
     }
 
     @Async
     public void envoyerAnnulationReservation(String email, Reservation reservation) {
         if (!emailEnabled) {
-            log.info("📧 Email désactivé (dev) - Annulation réservation #{} pour {}",
+            log.info("Email desactive (dev) - Annulation reservation #{} pour {}",
                     reservation.getId().substring(0, 8), email);
             return;
         }
@@ -75,120 +85,171 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(email);
-            helper.setSubject("❌ Annulation réservation #" + reservation.getId().substring(0, 8).toUpperCase());
+            helper.setSubject("Annulation reservation #" + reservation.getId().substring(0, 8).toUpperCase());
             helper.setText(buildAnnulationHtml(reservation), true);
             mailSender.send(message);
+            log.info("Email d'annulation envoye a {}", email);
         } catch (MessagingException e) {
-            log.error("Erreur envoi email annulation", e);
+            log.error("Erreur envoi email annulation: {}", e.getMessage());
         }
     }
 
-
-    /**
-     * ✅ HTML pour la confirmation de paiement
-     */
     private String buildPaiementConfirmationHtml(Reservation r) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: Inter, sans-serif; background: #0F0D0B; color: #F8F7F4; padding: 40px;">
-              <div style="max-width: 560px; margin: 0 auto; background: #1A1714; border-radius: 16px; padding: 40px; border: 1px solid rgba(34,197,94,0.2);">
-                <h1 style="color: #34D399; font-size: 28px; margin-bottom: 8px;">✓ Paiement confirmé !</h1>
-                <p style="color: #B3AFA7;">Référence : <strong>#%s</strong></p>
-                <hr style="border-color: rgba(52,211,153,0.15); margin: 24px 0;" />
-                <p style="color: #D5D2CC;">Montant payé : <strong style="color: #34D399;">%.2f€</strong></p>
-                <p style="color: #D5D2CC;">Statut : <strong style="color: #34D399;">CONFIRMÉE</strong></p>
-                <hr style="border-color: rgba(52,211,153,0.15); margin: 24px 0;" />
-                <div style="margin-top: 16px;">
-                  <h3 style="color: #FBBF24; font-size: 16px; margin-bottom: 12px;">Détails de la réservation :</h3>
-            """.formatted(r.getId().substring(0, 8).toUpperCase(), r.getMontantTotal()) +
-                buildLignesDetailsHtml(r) +
-                """
-                    </div>
-                    <div style="margin-top: 32px; padding: 16px; background: rgba(52,211,153,0.08); border-radius: 10px;">
-                      <p style="color: #34D399; margin: 0; font-size: 14px;">✓ Votre réservation est maintenant confirmée. Vous pouvez consulter les détails dans votre espace client.</p>
-                    </div>
-                    <div style="margin-top: 20px; padding: 16px; background: rgba(251,191,36,0.05); border-radius: 10px;">
-                      <p style="color: #FBBF24; margin: 0; font-size: 14px;">LuxeStay & Transit — Service client disponible 24h/24</p>
-                    </div>
-                  </div>
-                </body>
-                </html>
-                """;
+        String clientNom = r.getClient().getPrenom() + " " + r.getClient().getNom();
+        String ref = r.getId().substring(0, 8).toUpperCase();
+        String montant = String.format("%.2f", r.getMontantTotal());
+        String detailsHtml = buildLignesDetailsHtml(r);
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>\n");
+        html.append("<html>\n");
+        html.append("<head><meta charset='UTF-8'><title>Paiement confirme - LuxeStay & Transit</title>\n");
+        html.append("<style>\n");
+        html.append("body{font-family:Arial,sans-serif;background-color:#0F0D0B;color:#F8F7F4;margin:0;padding:0;}\n");
+        html.append(".container{max-width:600px;margin:0 auto;background-color:#1A1714;border-radius:16px;overflow:hidden;}\n");
+        html.append(".header{padding:30px;text-align:center;border-bottom:2px solid #FBBF24;}\n");
+        html.append(".header h1{color:#34D399;font-size:28px;margin:0;}\n");
+        html.append(".content{padding:30px;}\n");
+        html.append(".info-box{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:20px;margin:20px 0;}\n");
+        html.append(".price{font-size:24px;color:#FBBF24;font-weight:bold;}\n");
+        html.append(".footer{padding:20px;text-align:center;font-size:12px;color:#8A8580;}\n");
+        html.append("</style>\n");
+        html.append("</head>\n");
+        html.append("<body>\n");
+        html.append("<div class='container'>\n");
+        html.append("<div class='header'><h1>Paiement confirme !</h1></div>\n");
+        html.append("<div class='content'>\n");
+        html.append("<p>Bonjour <strong>").append(clientNom).append("</strong>,</p>\n");
+        html.append("<p>Nous vous confirmons que votre paiement a bien ete recu.</p>\n");
+        html.append("<div class='info-box'>\n");
+        html.append("<p><strong>Reference reservation :</strong> #").append(ref).append("</p>\n");
+        html.append("<p><strong>Montant paye :</strong> <span class='price'>").append(montant).append(" EUR</span></p>\n");
+        html.append("<p><strong>Statut :</strong> CONFIRMEE</p>\n");
+        html.append("</div>\n");
+        html.append("<h3>Details de la reservation :</h3>\n");
+        html.append(detailsHtml);
+        html.append("</div>\n");
+        html.append("<div class='footer'>\n");
+        html.append("<p>LuxeStay & Transit - Service client disponible 24h/24</p>\n");
+        html.append("</div>\n");
+        html.append("</div>\n");
+        html.append("</body>\n");
+        html.append("</html>");
+
+        return html.toString();
     }
 
-    /**
-     * HTML pour afficher les lignes de réservation
-     */
     private String buildLignesDetailsHtml(Reservation r) {
         StringBuilder sb = new StringBuilder();
-        for (var ligne : r.getLignes()) {
+        for (LigneReservation ligne : r.getLignes()) {
             if (ligne.getChambre() != null) {
-                sb.append("""
-                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-                      <p style="color: #FBBF24; margin: 0 0 4px 0;">🏨 Chambre %s</p>
-                      <p style="color: #8A8580; font-size: 13px; margin: 0;">Du %s au %s</p>
-                      <p style="color: #D5D2CC; font-size: 14px; margin: 8px 0 0 0;">Prix: %.2f€</p>
-                    </div>
-                    """.formatted(
-                        ligne.getChambre().getNumero(),
-                        ligne.getDateArrivee(),
-                        ligne.getDateDepart(),
-                        ligne.getPrixTotal()
-                ));
+                sb.append("<div style='background:rgba(255,255,255,0.03);border-radius:12px;padding:15px;margin-bottom:15px;'>\n");
+                sb.append("<h3>Chambre ").append(ligne.getChambre().getNumero()).append(" - ").append(ligne.getChambre().getType()).append("</h3>\n");
+                sb.append("<p>Du ").append(ligne.getDateArrivee()).append(" au ").append(ligne.getDateDepart()).append("</p>\n");
+                sb.append("<p>Capacite : ").append(ligne.getChambre().getCapacite()).append(" personne(s)</p>\n");
+                sb.append("<p>Prix : <strong>").append(String.format("%.2f", ligne.getPrixTotal())).append(" EUR</strong></p>\n");
+                sb.append("</div>\n");
             } else if (ligne.getTrajet() != null) {
-                sb.append("""
-                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-                      <p style="color: #FBBF24; margin: 0 0 4px 0;">🚆 %s → %s</p>
-                      <p style="color: #8A8580; font-size: 13px; margin: 0;">%s place(s)</p>
-                      <p style="color: #D5D2CC; font-size: 14px; margin: 8px 0 0 0;">Prix: %.2f€</p>
-                    </div>
-                    """.formatted(
-                        ligne.getTrajet().getLieuDepart(),
-                        ligne.getTrajet().getLieuArrivee(),
-                        ligne.getNombrePlaces(),
-                        ligne.getPrixTotal()
-                ));
+                sb.append("<div style='background:rgba(255,255,255,0.03);border-radius:12px;padding:15px;margin-bottom:15px;'>\n");
+                sb.append("<h3>").append(ligne.getTrajet().getLieuDepart()).append(" -> ").append(ligne.getTrajet().getLieuArrivee()).append("</h3>\n");
+                sb.append("<p>Transport : ").append(ligne.getTrajet().getTypeTransport()).append("</p>\n");
+                sb.append("<p>Depart : ").append(ligne.getTrajet().getDateDepart()).append("</p>\n");
+                sb.append("<p>").append(ligne.getNombrePlaces()).append(" place(s)</p>\n");
+                sb.append("<p>Prix : <strong>").append(String.format("%.2f", ligne.getPrixTotal())).append(" EUR</strong></p>\n");
+                sb.append("</div>\n");
             }
         }
         return sb.toString();
     }
 
     private String buildConfirmationHtml(Reservation r) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: Inter, sans-serif; background: #0F0D0B; color: #F8F7F4; padding: 40px;">
-              <div style="max-width: 560px; margin: 0 auto; background: #1A1714; border-radius: 16px; padding: 40px; border: 1px solid rgba(251,191,36,0.2);">
-                <h1 style="color: #FBBF24; font-size: 28px; margin-bottom: 8px;">Réservation créée !</h1>
-                <p style="color: #B3AFA7;">Référence : <strong>#%s</strong></p>
-                <hr style="border-color: rgba(251,191,36,0.15); margin: 24px 0;" />
-                <p style="color: #D5D2CC;">Montant total : <strong style="color: #FBBF24;">%.2f€</strong></p>
-                <p style="color: #8A8580; font-size: 14px;">Merci de votre confiance. Votre paiement sera traité via Stripe.</p>
-                <div style="margin-top: 32px; padding: 16px; background: rgba(251,191,36,0.08); border-radius: 10px;">
-                  <p style="color: #FBBF24; margin: 0; font-size: 14px;">LuxeStay & Transit — Service client disponible 24h/24</p>
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(r.getId().substring(0, 8).toUpperCase(), r.getMontantTotal());
+        String clientNom = r.getClient().getPrenom() + " " + r.getClient().getNom();
+        String ref = r.getId().substring(0, 8).toUpperCase();
+        String montant = String.format("%.2f", r.getMontantTotal());
+        String detailsHtml = buildLignesDetailsHtml(r);
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>\n");
+        html.append("<html>\n");
+        html.append("<head><meta charset='UTF-8'><title>Reservation creee - LuxeStay & Transit</title>\n");
+        html.append("<style>\n");
+        html.append("body{font-family:Arial,sans-serif;background-color:#0F0D0B;color:#F8F7F4;margin:0;padding:0;}\n");
+        html.append(".container{max-width:600px;margin:0 auto;background-color:#1A1714;border-radius:16px;overflow:hidden;}\n");
+        html.append(".header{padding:30px;text-align:center;border-bottom:2px solid #FBBF24;}\n");
+        html.append(".header h1{color:#FBBF24;font-size:28px;margin:0;}\n");
+        html.append(".content{padding:30px;}\n");
+        html.append(".info-box{background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:20px;margin:20px 0;}\n");
+        html.append(".price{font-size:24px;color:#FBBF24;font-weight:bold;}\n");
+        html.append(".button{display:inline-block;background-color:#FBBF24;color:#0F0D0B;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:20px;}\n");
+        html.append(".footer{padding:20px;text-align:center;font-size:12px;color:#8A8580;}\n");
+        html.append("</style>\n");
+        html.append("</head>\n");
+        html.append("<body>\n");
+        html.append("<div class='container'>\n");
+        html.append("<div class='header'><h1>Reservation creee !</h1></div>\n");
+        html.append("<div class='content'>\n");
+        html.append("<p>Bonjour <strong>").append(clientNom).append("</strong>,</p>\n");
+        html.append("<p>Nous avons bien recu votre demande de reservation.</p>\n");
+        html.append("<div class='info-box'>\n");
+        html.append("<p><strong>Reference reservation :</strong> #").append(ref).append("</p>\n");
+        html.append("<p><strong>Montant total :</strong> <span class='price'>").append(montant).append(" EUR</span></p>\n");
+        html.append("</div>\n");
+        html.append("<h3>Recapitulatif :</h3>\n");
+        html.append(detailsHtml);
+        html.append("<div style='text-align:center;'><a href='http://localhost:3000/payment/").append(r.getId()).append("' class='button'>Payer maintenant</a></div>\n");
+        html.append("<p style='font-size:12px;text-align:center;margin-top:20px;'>Vous avez 24h pour finaliser votre paiement.</p>\n");
+        html.append("</div>\n");
+        html.append("<div class='footer'>\n");
+        html.append("<p>LuxeStay & Transit - Service client disponible 24h/24</p>\n");
+        html.append("</div>\n");
+        html.append("</div>\n");
+        html.append("</body>\n");
+        html.append("</html>");
+
+        return html.toString();
     }
 
     private String buildAnnulationHtml(Reservation r) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: Inter, sans-serif; background: #0F0D0B; color: #F8F7F4; padding: 40px;">
-              <div style="max-width: 560px; margin: 0 auto; background: #1A1714; border-radius: 16px; padding: 40px; border: 1px solid rgba(239,68,68,0.2);">
-                <h1 style="color: #F87171; font-size: 28px; margin-bottom: 8px;">Réservation annulée</h1>
-                <p style="color: #B3AFA7;">Référence : <strong>#%s</strong></p>
-                <hr style="border-color: rgba(239,68,68,0.15); margin: 24px 0;" />
-                <p style="color: #D5D2CC;">Montant remboursé : <strong style="color: #34D399;">%.2f€</strong></p>
-                <p style="color: #8A8580; font-size: 14px;">Le remboursement sera effectué sous 5-10 jours ouvrés.</p>
-              </div>
-            </body>
-            </html>
-            """.formatted(r.getId().substring(0, 8).toUpperCase(), r.getMontantTotal());
+        String clientNom = r.getClient().getPrenom() + " " + r.getClient().getNom();
+        String ref = r.getId().substring(0, 8).toUpperCase();
+        String montant = String.format("%.2f", r.getMontantTotal());
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>\n");
+        html.append("<html>\n");
+        html.append("<head><meta charset='UTF-8'><title>Reservation annulee - LuxeStay & Transit</title>\n");
+        html.append("<style>\n");
+        html.append("body{font-family:Arial,sans-serif;background-color:#0F0D0B;color:#F8F7F4;margin:0;padding:0;}\n");
+        html.append(".container{max-width:600px;margin:0 auto;background-color:#1A1714;border-radius:16px;overflow:hidden;}\n");
+        html.append(".header{padding:30px;text-align:center;border-bottom:2px solid #F87171;}\n");
+        html.append(".header h1{color:#F87171;font-size:28px;margin:0;}\n");
+        html.append(".content{padding:30px;}\n");
+        html.append(".info-box{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:20px;margin:20px 0;}\n");
+        html.append(".footer{padding:20px;text-align:center;font-size:12px;color:#8A8580;}\n");
+        html.append("</style>\n");
+        html.append("</head>\n");
+        html.append("<body>\n");
+        html.append("<div class='container'>\n");
+        html.append("<div class='header'><h1>Reservation annulee</h1></div>\n");
+        html.append("<div class='content'>\n");
+        html.append("<p>Bonjour <strong>").append(clientNom).append("</strong>,</p>\n");
+        html.append("<p>Conformement a votre demande, votre reservation a ete annulee.</p>\n");
+        html.append("<div class='info-box'>\n");
+        html.append("<p><strong>Reference reservation :</strong> #").append(ref).append("</p>\n");
+        html.append("<p><strong>Montant rembourse :</strong> ").append(montant).append(" EUR</p>\n");
+        html.append("<p><strong>Statut :</strong> ANNULEE</p>\n");
+        html.append("</div>\n");
+        html.append("<p>Le remboursement sera effectue sous 5 a 10 jours ouvrés.</p>\n");
+        html.append("</div>\n");
+        html.append("<div class='footer'>\n");
+        html.append("<p>LuxeStay & Transit - Service client disponible 24h/24</p>\n");
+        html.append("</div>\n");
+        html.append("</div>\n");
+        html.append("</body>\n");
+        html.append("</html>");
+
+        return html.toString();
     }
 }

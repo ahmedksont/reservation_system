@@ -10,6 +10,7 @@ import com.reservation.security.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,27 +30,28 @@ public class AuthController {
         }
 
         Client client = Client.builder()
-            .nom(request.getNom())
-            .prenom(request.getPrenom())
-            .email(request.getEmail().toLowerCase())
-            .motDePasse(passwordEncoder.encode(request.getMotDePasse()))
-            .telephone(request.getTelephone())
-            .role(Client.Role.CLIENT)
-            .build();
+                .nom(request.getNom())
+                .prenom(request.getPrenom())
+                .email(request.getEmail().toLowerCase())
+                .motDePasse(passwordEncoder.encode(request.getMotDePasse()))
+                .telephone(request.getTelephone())
+                .role(Client.Role.CLIENT)
+                .actif(true)
+                .build();
 
         client = clientRepository.save(client);
         String token = jwtService.generateToken(client);
 
         return ResponseEntity.ok(AuthResponse.builder()
-            .token(token)
-            .user(AuthResponse.UserInfo.from(client))
-            .build());
+                .token(token)
+                .user(AuthResponse.UserInfo.from(client))
+                .build());
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         Client client = clientRepository.findByEmail(request.getEmail().toLowerCase())
-            .orElseThrow(() -> new BusinessException("Identifiants incorrects"));
+                .orElseThrow(() -> new BusinessException("Identifiants incorrects"));
 
         if (!client.getActif()) {
             throw new BusinessException("Compte désactivé. Contactez le support.");
@@ -62,18 +64,27 @@ public class AuthController {
         String token = jwtService.generateToken(client);
 
         return ResponseEntity.ok(AuthResponse.builder()
-            .token(token)
-            .user(AuthResponse.UserInfo.from(client))
-            .build());
+                .token(token)
+                .user(AuthResponse.UserInfo.from(client))
+                .build());
     }
 
     @GetMapping("/me")
     public ResponseEntity<AuthResponse.UserInfo> me(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal String clientId) {
+            @AuthenticationPrincipal String clientId) {
+
+        if (clientId == null) {
+            throw new BusinessException("Utilisateur non authentifié");
+        }
 
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new BusinessException("Utilisateur introuvable"));
+                .orElseThrow(() -> new BusinessException("Utilisateur introuvable"));
 
         return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
+    }
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal String clientId) {
+        clientRepository.deleteById(clientId);
+        return ResponseEntity.noContent().build();
     }
 }
