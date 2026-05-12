@@ -2,6 +2,7 @@ package com.reservation.controller;
 
 import com.reservation.dto.response.AuthResponse;
 import com.reservation.entity.Client;
+import com.reservation.exception.BusinessException;
 import com.reservation.repository.ChambreRepository;
 import com.reservation.repository.ClientRepository;
 import com.reservation.repository.ReservationRepository;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -32,6 +34,8 @@ public class AdminController {
     private final ReservationRepository reservationRepository;
     private final ChambreRepository chambreRepository;
     private final TrajetRepository trajetRepository;
+    private final ClientRepository clientRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
@@ -81,5 +85,99 @@ public class AdminController {
             clientRepository.save(c);
         });
         return ResponseEntity.noContent().build();
+    }
+    /**
+     * GET /api/admin/users - Liste paginée des utilisateurs (admin)
+     */
+    @GetMapping("/users")
+    public ResponseEntity<Page<AuthResponse.UserInfo>> getAllUsers(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+
+        return ResponseEntity.ok(
+                clientRepository.findAll(pageable).map(AuthResponse.UserInfo::from)
+        );
+    }
+
+    /**
+     * GET /api/admin/users/{id} - Détails d'un utilisateur (admin)
+     */
+    @GetMapping("/users/{id}")
+    public ResponseEntity<AuthResponse.UserInfo> getUserById(@PathVariable String id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+
+        return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
+    }
+
+    /**
+     * PUT /api/admin/users/{id} - Modifier un utilisateur (admin)
+     */
+    @PutMapping("/users/{id}")
+    public ResponseEntity<AuthResponse.UserInfo> updateUser(
+            @PathVariable String id,
+            @RequestBody AdminUpdateUserRequest request) {
+
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+
+        // Vérifier l'unicité de l'email
+        if (request.getEmail() != null && !request.getEmail().equals(client.getEmail())) {
+            if (clientRepository.existsByEmail(request.getEmail())) {
+                throw new BusinessException("Cet email est déjà utilisé");
+            }
+            client.setEmail(request.getEmail().toLowerCase());
+        }
+
+        if (request.getNom() != null) {
+            client.setNom(request.getNom());
+        }
+        if (request.getPrenom() != null) {
+            client.setPrenom(request.getPrenom());
+        }
+        if (request.getTelephone() != null) {
+            client.setTelephone(request.getTelephone());
+        }
+        if (request.getRole() != null) {
+            client.setRole(request.getRole());
+        }
+        if (request.getActif() != null) {
+            client.setActif(request.getActif());
+        }
+
+        client = clientRepository.save(client);
+
+        return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
+    }
+
+    /**
+     * DELETE /api/admin/users/{id} - Supprimer définitivement un utilisateur (admin)
+     */
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+
+        // Empêcher la suppression de son propre compte
+        // (vous devrez passer l'ID de l'admin connecté)
+
+        clientRepository.delete(client);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * POST /api/admin/users/{id}/reset-password - Réinitialiser le mot de passe (admin)
+     */
+    @PostMapping("/users/{id}/reset-password")
+    public ResponseEntity<Void> resetUserPassword(@PathVariable String id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+
+        // Mot de passe par défaut
+        String defaultPassword = "password123";
+        client.setMotDePasse(passwordEncoder.encode(defaultPassword));
+        clientRepository.save(client);
+
+        return ResponseEntity.ok().build();
     }
 }
