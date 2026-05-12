@@ -43,32 +43,29 @@ export default function ProfilePage() {
     setIsReady(true);
   }, []);
 
-  if (!isReady) return null;
-
-  if (!user) {
-    notFound();
-    return null;
-  }
-
+  
   const handleLogout = () => {
     logout();
     router.push("/");
   };
 
   // Profile form
-  const [profileForm, setProfileForm] = useState({
-    prenom: "",
-    nom: "",
-    email: "",
-    telephone: "",
-  });
+ // Profile form
+const [profileForm, setProfileForm] = useState({
+  prenom: "",
+  nom: "",
+  email: "",
+  telephone: "",
+});
 
-  // Password form
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+// Password form
+const [passwordForm, setPasswordForm] = useState({
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
+
+
 
   // Load user data
   useEffect(() => {
@@ -136,6 +133,12 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+  if (!isReady) return null;
+
+if (!user) {
+  notFound();
+  return null;
+}
 
   const handleDeleteAccount = async () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {

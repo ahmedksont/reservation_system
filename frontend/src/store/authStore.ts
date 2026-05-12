@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { api } from "@/lib/api";
 
 interface User {
+  telephone: string;
   id: string;
   nom: string;
   prenom: string;
