@@ -3,11 +3,11 @@ package com.reservation.dto.response;
 import com.reservation.entity.Chambre;
 import lombok.Builder;
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.util.List;
 
-@Data @Builder
+@Data
+@Builder
 public class ChambreResponse {
     private String id;
     private String numero;
@@ -17,21 +17,25 @@ public class ChambreResponse {
     private Integer capacite;
     private Boolean disponible;
     private List<String> equipements;
-    private String imageUrl;
+    private List<String> images;  // ✅ Liste d'images
+    private String imageUrl;      // Gardé pour compatibilité (première image)
     private Integer etage;
+    private Long version;
 
-    public static ChambreResponse from(Chambre c) {
+    public static ChambreResponse from(Chambre chambre) {
         return ChambreResponse.builder()
-            .id(c.getId())
-            .numero(c.getNumero())
-            .type(c.getType().name())
-            .prixParNuit(c.getPrixParNuit())
-            .description(c.getDescription())
-            .capacite(c.getCapacite())
-            .disponible(c.getDisponible())
-            .equipements(c.getEquipements())
-            .imageUrl(c.getImageUrl())
-            .etage(c.getEtage())
-            .build();
+                .id(chambre.getId())
+                .numero(chambre.getNumero())
+                .type(chambre.getType().name())
+                .prixParNuit(chambre.getPrixParNuit())
+                .description(chambre.getDescription())
+                .capacite(chambre.getCapacite())
+                .disponible(chambre.getDisponible())
+                .equipements(chambre.getEquipements())
+                .images(chambre.getAllImages())  // ✅ Toutes les images
+                .imageUrl(chambre.getFirstImage()) // ✅ Première image pour compatibilité
+                .etage(chambre.getEtage())
+                .version(chambre.getVersion())
+                .build();
     }
 }

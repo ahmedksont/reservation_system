@@ -7,8 +7,10 @@ export interface Chambre {
   capacite: number;
   disponible: boolean;
   equipements: string[];
-  imageUrl?: string;
+  imageUrl?: string;      // Gardé pour compatibilité (première image)
+  images?: string[];      // ✅ Nouveau : liste d'images pour carrousel
   etage: number;
+  version?: number;
 }
 
 export interface Trajet {
@@ -32,7 +34,9 @@ export interface Client {
   email: string;
   telephone?: string;
   role: "CLIENT" | "ADMIN";
+  actif?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface LigneReservation {
@@ -53,6 +57,7 @@ export interface Reservation {
   statut: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE" | "TERMINEE";
   statutPaiement: "EN_ATTENTE" | "PAYE" | "REMBOURSE" | "ECHOUE";
   stripePaymentIntentId?: string;
+  stripeClientSecret?: string;
   lignes: LigneReservation[];
   notes?: string;
   createdAt: string;
@@ -86,4 +91,16 @@ export interface ReservationRequest {
   dateDepart?: string;
   nombrePlaces?: number;
   notes?: string;
+}
+
+export interface User {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone?: string;
+  role: "CLIENT" | "ADMIN";
+  actif: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }

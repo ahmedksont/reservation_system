@@ -78,10 +78,12 @@ export default function RoomDetailPage() {
 
   const id = params.id as string;
 
-  // Mock additional images for gallery if not provided by backend
-  const galleryImages = room?.imageUrl
-    ? [room.imageUrl, "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=1000", "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=1000"]
-    : ["https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=1000"];
+  // Récupérer toutes les images de la chambre
+  const allImages = room?.images && room.images.length > 0 
+    ? room.images 
+    : room?.imageUrl 
+      ? [room.imageUrl] 
+      : ["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200"];
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -158,6 +160,7 @@ export default function RoomDetailPage() {
 
   const nights = calculateNights();
   const total = calculateTotal();
+  const hasMultipleImages = allImages.length > 1;
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] text-stone-800">
@@ -196,6 +199,10 @@ export default function RoomDetailPage() {
                   <MapPin size={16} />
                   <span>Étage {room.etage}</span>
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <Users size={16} />
+                  <span>{room.capacite} personne{room.capacite > 1 ? "s" : ""}</span>
+                </div>
               </div>
             </motion.div>
 
@@ -216,69 +223,102 @@ export default function RoomDetailPage() {
             </motion.div>
           </div>
 
-          {/* Gallery */}
+          {/* Gallery with Carrousel */}
           <motion.section
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-16"
           >
+            {/* Main Image */}
             <div className="lg:col-span-3 relative h-[500px] md:h-[600px] rounded-[3rem] overflow-hidden group shadow-2xl">
               <AnimatePresence mode="wait">
                 <motion.img
                   key={activeImage}
-                  src={galleryImages[activeImage]}
+                  src={allImages[activeImage]}
                   initial={{ opacity: 0, scale: 1.1 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ duration: 0.5 }}
                   className="w-full h-full object-cover"
-                  alt="Room View"
+                  alt={`Chambre ${room.numero} - Image ${activeImage + 1}`}
                 />
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent" />
+              
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent pointer-events-none" />
 
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-                {galleryImages.map((_, i) => (
+              {/* Navigation Arrows */}
+              {hasMultipleImages && (
+                <>
+                  <button
+                    onClick={() => setActiveImage((prev) => (prev - 1 + allImages.length) % allImages.length)}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/60"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    onClick={() => setActiveImage((prev) => (prev + 1) % allImages.length)}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/60"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              )}
+
+              {/* Dots Indicator */}
+              {hasMultipleImages && (
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-sm rounded-full">
+                  {allImages.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      className={`transition-all rounded-full ${
+                        activeImage === i 
+                          ? "w-2.5 h-2.5 bg-white" 
+                          : "w-2 h-2 bg-white/50 hover:bg-white/70"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Image Counter */}
+              {hasMultipleImages && (
+                <div className="absolute top-6 right-6 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                  {activeImage + 1} / {allImages.length}
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {hasMultipleImages && (
+              <div className="hidden lg:flex flex-col gap-4">
+                {allImages.slice(0, 3).map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${activeImage === i ? "bg-white scale-125" : "bg-white/40 hover:bg-white/60"}`}
-                  />
+                    className={`relative h-[calc((600px-48px)/3)] rounded-2xl overflow-hidden transition-all ${
+                      activeImage === i 
+                        ? "ring-2 ring-amber-500 shadow-lg" 
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img 
+                      src={img} 
+                      className="w-full h-full object-cover"
+                      alt={`Thumbnail ${i + 1}`}
+                    />
+                  </button>
                 ))}
               </div>
-
-              <button
-                onClick={() => setActiveImage((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
-                className="absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20"
-              >
-                <ChevronLeft size={24} />
-              </button>
-              <button
-                onClick={() => setActiveImage((prev) => (prev + 1) % galleryImages.length)}
-                className="absolute right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
-
-            <div className="hidden lg:grid grid-rows-3 gap-6">
-              {galleryImages.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  className={`relative rounded-3xl overflow-hidden group border-4 transition-all ${activeImage === i ? "border-amber-500 shadow-xl" : "border-transparent hover:border-white/50"}`}
-                >
-                  <img src={img} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Thumbnail" />
-                  <div className={`absolute inset-0 bg-stone-900/20 transition-opacity ${activeImage === i ? "opacity-0" : "opacity-40 group-hover:opacity-20"}`} />
-                </button>
-              ))}
-            </div>
+            )}
           </motion.section>
 
           {/* Grid Content */}
           <div className="grid lg:grid-cols-3 gap-16">
             <div className="lg:col-span-2 space-y-12">
+              {/* Description */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -290,38 +330,41 @@ export default function RoomDetailPage() {
                 </p>
               </motion.div>
 
+              {/* Amenities */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
               >
                 <h2 className="font-serif text-3xl text-stone-900 mb-8">Ce que propose ce logement</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {room.equipements?.map((eq) => (
-                    <div key={eq} className="flex items-center gap-4 p-5 bg-white rounded-3xl border border-stone-100 shadow-sm hover:shadow-md transition-all">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-700">
-                        {getEquipmentIcon(eq)}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {room.equipements && room.equipements.length > 0 ? (
+                    room.equipements.map((eq) => (
+                      <div key={eq} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-stone-100 shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
+                          {getEquipmentIcon(eq)}
+                        </div>
+                        <span className="font-medium text-stone-700">{eq}</span>
                       </div>
-                      <span className="font-medium text-stone-700">{eq}</span>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-stone-400">Aucun équipement spécifié</p>
+                  )}
                 </div>
               </motion.div>
 
+              {/* Concierge */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="bg-stone-900 rounded-[3rem] p-12 text-white relative overflow-hidden"
+                className="bg-stone-900 rounded-[2.5rem] p-10 text-white"
               >
-                <div className="relative z-10">
-                  <h2 className="font-serif text-3xl mb-4">Besoin d'aide ?</h2>
-                  <p className="text-stone-400 mb-8 max-w-md">Notre conciergerie est à votre disposition 24/7 pour rendre votre séjour inoubliable.</p>
-                  <button className="px-8 py-4 bg-white text-stone-900 rounded-full font-bold text-sm hover:bg-amber-500 hover:text-white transition-all shadow-xl">
-                    Contacter la réception
-                  </button>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full" />
+                <h2 className="font-serif text-2xl mb-3">Besoin d'aide ?</h2>
+                <p className="text-stone-400 mb-6 max-w-md">Notre conciergerie est à votre disposition 24/7 pour rendre votre séjour inoubliable.</p>
+                <button className="px-6 py-3 bg-white text-stone-900 rounded-full font-medium text-sm hover:bg-amber-500 hover:text-white transition-all">
+                  Contacter la réception
+                </button>
               </motion.div>
             </div>
 
@@ -332,88 +375,81 @@ export default function RoomDetailPage() {
               transition={{ delay: 0.4 }}
               className="lg:sticky lg:top-32 h-fit"
             >
-              <div className="bg-white rounded-[3rem] border border-stone-100 shadow-2xl p-10 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-2 bg-amber-500" />
-
-                <div className="flex items-baseline justify-between mb-10">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-serif text-4xl font-bold text-stone-900">{room.prixParNuit}TND</span>
-                    <span className="text-stone-400 text-sm">/ nuit</span>
+              <div className="bg-white rounded-[2rem] border border-stone-100 shadow-xl p-8">
+                {/* Price */}
+                <div className="flex items-baseline justify-between mb-8 pb-6 border-b border-stone-100">
+                  <div>
+                    <span className="font-serif text-4xl font-bold text-stone-900">{room.prixParNuit} TND</span>
+                    <span className="text-stone-400 text-sm ml-1">/ nuit</span>
                   </div>
-                  <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
-                    <Star size={14} fill="currentColor" />
-                    <span>4.9</span>
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Star size={16} fill="currentColor" />
+                    <span className="font-semibold text-stone-700">4.9</span>
                   </div>
                 </div>
 
-                <div className="space-y-6 mb-10">
-                  <div className="grid grid-cols-2 gap-px bg-stone-200 rounded-3xl border border-stone-200 overflow-hidden">
-                    <div className="bg-white p-5 space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Arrivée</label>
-                      <input
-                        type="date"
-                        value={selectedDates.dateArrivee}
-                        onChange={(e) => setSelectedDates(d => ({ ...d, dateArrivee: e.target.value }))}
-                        className="w-full text-sm font-bold focus:outline-none bg-transparent"
-                      />
-                    </div>
-                    <div className="bg-white p-5 space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Départ</label>
-                      <input
-                        type="date"
-                        value={selectedDates.dateDepart}
-                        onChange={(e) => setSelectedDates(d => ({ ...d, dateDepart: e.target.value }))}
-                        className="w-full text-sm font-bold focus:outline-none bg-transparent"
-                      />
-                    </div>
+                {/* Date Inputs */}
+                <div className="space-y-4 mb-8">
+                  <div className="p-4 border border-stone-200 rounded-xl">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">ARRIVÉE</label>
+                    <input
+                      type="date"
+                      value={selectedDates.dateArrivee}
+                      onChange={(e) => setSelectedDates(d => ({ ...d, dateArrivee: e.target.value }))}
+                      className="w-full text-sm font-medium focus:outline-none bg-transparent"
+                      min={new Date().toISOString().split('T')[0]}
+                    />
                   </div>
-
+                  <div className="p-4 border border-stone-200 rounded-xl">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">DÉPART</label>
+                    <input
+                      type="date"
+                      value={selectedDates.dateDepart}
+                      onChange={(e) => setSelectedDates(d => ({ ...d, dateDepart: e.target.value }))}
+                      className="w-full text-sm font-medium focus:outline-none bg-transparent"
+                      min={selectedDates.dateArrivee || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
                 </div>
 
+                {/* Price Details */}
                 {nights > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mb-10 space-y-4 pt-6 border-t border-stone-50"
-                  >
-                    <div className="flex justify-between text-stone-500 text-sm">
-                      <span>{room.prixParNuit}TND x {nights} nuits</span>
-                      <span className="font-bold text-stone-900">{total}TND</span>
+                  <div className="space-y-3 mb-8 pt-4 border-t border-stone-100">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">{room.prixParNuit} TND × {nights} nuits</span>
+                      <span className="font-medium text-stone-900">{total} TND</span>
                     </div>
-                    <div className="flex justify-between text-stone-500 text-sm">
-                      <span>Frais de service</span>
-                      <span className="font-bold text-stone-900">0TND</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Frais de service</span>
+                      <span className="font-medium text-stone-900">0 TND</span>
                     </div>
-                    <div className="flex justify-between items-center pt-4 border-t border-stone-50">
-                      <span className="font-bold text-stone-900">Total</span>
-                      <span className="font-serif text-3xl font-bold text-amber-600">{total}TND</span>
+                    <div className="flex justify-between pt-3 border-t border-stone-100">
+                      <span className="font-bold text-stone-900">Total TTC</span>
+                      <span className="font-serif text-2xl font-bold text-amber-600">{total} TND</span>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
+                {/* Reserve Button */}
                 <button
                   onClick={handleReserve}
                   disabled={!room.disponible}
-                  className={`w-full py-5 rounded-2xl font-bold text-sm transition-all shadow-xl active:scale-[0.98] ${!room.disponible
+                  className={`w-full py-4 rounded-xl font-bold text-sm transition-all ${
+                    !room.disponible
                       ? "bg-stone-100 text-stone-400 cursor-not-allowed"
-                      : "bg-stone-900 text-white hover:bg-amber-600 shadow-stone-900/20"
-                    }`}
+                      : "bg-stone-900 text-white hover:bg-amber-600 hover:shadow-lg"
+                  }`}
                 >
                   {room.disponible ? "Réserver maintenant" : "Indisponible"}
                 </button>
 
-                <p className="text-center text-[10px] text-stone-400 mt-6 uppercase tracking-widest font-bold">
-                  Aucun montant ne sera débité pour l'instant
-                </p>
-              </div>
-
-              <div className="mt-8 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-600 shadow-sm">
-                  <Shield size={20} />
+                {/* Guarantee */}
+                <div className="mt-6 flex items-center gap-3 p-4 bg-amber-50 rounded-xl">
+                  <Shield size={18} className="text-amber-600" />
+                  <p className="text-[11px] text-amber-800 font-medium">
+                    Annulation gratuite jusqu'à 48h avant l'arrivée
+                  </p>
                 </div>
-                <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                  Garantie du meilleur prix et annulation gratuite jusqu'à 48h avant l'arrivée.
-                </p>
               </div>
             </motion.aside>
           </div>
