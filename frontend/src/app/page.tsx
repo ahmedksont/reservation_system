@@ -31,81 +31,6 @@ import Footer from "@/components/layout/Footer";
 
 /* ─── Sub-components (inline for self-contained redesign) ─────────── */
 
-function FloatingSearch() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-5xl mx-auto -mt-16 md:-mt-24 relative z-30 px-4"
-    >
-      <div className="bg-white/70 backdrop-blur-2xl rounded-3xl p-3 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
-          {/* Destination */}
-          <div className="md:col-span-4 relative group">
-            <div className="flex items-center gap-4 px-6 py-5 rounded-2xl bg-white/50 hover:bg-white transition-all duration-300 border border-transparent hover:border-amber-200/50">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-700 group-hover:scale-110 transition-transform">
-                <MapPin size={20} />
-              </div>
-              <div className="flex flex-col items-start min-w-0 flex-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-900/40 mb-0.5">
-                  Destination
-                </span>
-                <input
-                  type="text"
-                  placeholder="Où allez-vous ?"
-                  className="bg-transparent text-stone-800 text-base font-semibold placeholder:text-stone-400 focus:outline-none w-full"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div className="md:col-span-3 relative group">
-            <div className="flex items-center gap-4 px-6 py-5 rounded-2xl bg-white/50 hover:bg-white transition-all duration-300 border border-transparent hover:border-amber-200/50">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-700 group-hover:scale-110 transition-transform">
-                <Calendar size={20} />
-              </div>
-              <div className="flex flex-col items-start flex-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-900/40 mb-0.5">
-                  Dates
-                </span>
-                <span className="text-stone-800 text-base font-semibold">
-                  12 — 18 Juin
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Guests */}
-          <div className="md:col-span-3 relative group">
-            <div className="flex items-center gap-4 px-6 py-5 rounded-2xl bg-white/50 hover:bg-white transition-all duration-300 border border-transparent hover:border-amber-200/50">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-700 group-hover:scale-110 transition-transform">
-                <Users size={20} />
-              </div>
-              <div className="flex flex-col items-start flex-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-900/40 mb-0.5">
-                  Voyageurs
-                </span>
-                <span className="text-stone-800 text-base font-semibold">
-                  2 adultes
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="md:col-span-2">
-            <button className="w-full h-full min-h-[64px] rounded-2xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-xl hover:shadow-amber-900/30 active:scale-[0.96] group">
-              <Search size={20} className="group-hover:rotate-12 transition-transform" />
-              <span className="md:hidden lg:inline">Explorer</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 function DestinationCard({
   city,
@@ -142,7 +67,7 @@ function DestinationCard({
       <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
         <div className="flex items-end justify-between">
           <div>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, x: -10 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 + index * 0.1 }}
@@ -326,7 +251,7 @@ export default function HomePage() {
         className="relative h-[90dvh] md:h-[100dvh] flex flex-col items-center justify-center overflow-hidden"
       >
         {/* Background Image with Parallax */}
-        <motion.div 
+        <motion.div
           style={{ y: heroY, scale: heroScale }}
           className="absolute inset-0 z-0"
         >
@@ -367,7 +292,7 @@ export default function HomePage() {
                 transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="text-lg md:text-2xl font-light text-white/80 max-w-3xl mx-auto mb-14 leading-relaxed"
               >
-                Une sélection exclusive des plus beaux refuges au monde. 
+                Une sélection exclusive des plus beaux refuges au monde.
                 Vivez une expérience de réservation aussi mémorable que votre séjour.
               </motion.p>
 
@@ -420,17 +345,15 @@ export default function HomePage() {
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
           <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center p-1">
-            <motion.div 
+            <motion.div
               animate={{ y: [0, 16, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="w-1 h-2 bg-amber-400 rounded-full" 
+              className="w-1 h-2 bg-amber-400 rounded-full"
             />
           </div>
         </motion.div>
       </section>
 
-      {/* Floating Search Bar (Now moved below the hero properly) */}
-      <FloatingSearch />
 
       {/* ── DESTINATIONS ─────────────────────────────────────────────── */}
       <section ref={destRef} className="relative z-10 py-48 px-4 max-w-7xl mx-auto overflow-hidden">
@@ -492,7 +415,7 @@ export default function HomePage() {
       <section ref={serviceRef} className="relative z-10 py-48 px-4 bg-stone-50 border-y border-stone-100 overflow-hidden">
         {/* Abstract background shape */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-amber-50 rounded-full blur-[150px] -mr-64 -mt-64 opacity-50" />
-        
+
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-24 items-center">
             <div className="lg:col-span-5">
@@ -517,10 +440,10 @@ export default function HomePage() {
                 transition={{ delay: 0.2, duration: 0.8 }}
                 className="text-stone-500 text-2xl font-light leading-relaxed mb-16"
               >
-                Nous transcendons la simple réservation pour créer des moments d&apos;exception. 
+                Nous transcendons la simple réservation pour créer des moments d&apos;exception.
                 Chaque détail est orchestré pour votre confort absolu.
               </motion.p>
-              
+
               <div className="grid grid-cols-2 gap-8">
                 <div>
                   <h4 className="text-amber-800 font-serif text-3xl mb-2 italic">24/7</h4>
@@ -532,7 +455,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="lg:col-span-7">
               <div className="grid md:grid-cols-2 gap-6">
                 {services.map((s, i) => (
@@ -581,7 +504,7 @@ export default function HomePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-stone-900/80" />
         </div>
-        
+
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -594,7 +517,7 @@ export default function HomePage() {
               <span className="italic text-amber-400">prochain voyage</span> ?
             </h2>
             <p className="text-stone-400 text-xl font-light mb-14 max-w-2xl mx-auto leading-relaxed">
-              Rejoignez une communauté de voyageurs exigeants. 
+              Rejoignez une communauté de voyageurs exigeants.
               Votre prochaine aventure d&apos;exception n&apos;est qu&apos;à quelques clics.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
