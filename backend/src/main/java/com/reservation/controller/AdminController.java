@@ -1,8 +1,11 @@
 package com.reservation.controller;
 
+import com.reservation.dto.request.AdminUpdateReservationRequest;
 import com.reservation.dto.request.AdminUpdateUserRequest;
+import com.reservation.dto.response.ReservationResponse;
 import com.reservation.dto.response.AuthResponse;
 import com.reservation.entity.Client;
+import com.reservation.entity.Reservation;
 import com.reservation.exception.BusinessException;
 import com.reservation.repository.ChambreRepository;
 import com.reservation.repository.ClientRepository;
@@ -33,7 +36,11 @@ public class AdminController {
     private final ReservationRepository reservationRepository;
     private final ChambreRepository chambreRepository;
     private final TrajetRepository trajetRepository;
-    private final PasswordEncoder passwordEncoder;  // Supprimé la seconde déclaration de clientRepository
+    private final PasswordEncoder passwordEncoder;
+
+    // ============================================
+    // STATS
+    // ============================================
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
@@ -68,6 +75,10 @@ public class AdminController {
         return ResponseEntity.ok(stats);
     }
 
+    // ============================================
+    // CLIENTS (USERS)
+    // ============================================
+
     @GetMapping("/clients")
     public ResponseEntity<Page<AuthResponse.UserInfo>> getClients(
             @PageableDefault(size = 20) Pageable pageable) {
@@ -85,33 +96,22 @@ public class AdminController {
         return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
     }
 
-    /**
-     * GET /api/admin/users - Liste de tous les utilisateurs (sans pagination)
-     */
     @GetMapping("/users")
     public ResponseEntity<List<AuthResponse.UserInfo>> getAllUsers() {
         List<AuthResponse.UserInfo> users = clientRepository.findAll()
                 .stream()
                 .map(AuthResponse.UserInfo::from)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * GET /api/admin/users/{id} - Détails d'un utilisateur
-     */
     @GetMapping("/users/{id}")
     public ResponseEntity<AuthResponse.UserInfo> getUserById(@PathVariable String id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
-
         return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
     }
 
-    /**
-     * PUT /api/admin/users/{id} - Modifier un utilisateur
-     */
     @PutMapping("/users/{id}")
     public ResponseEntity<AuthResponse.UserInfo> updateUser(
             @PathVariable String id,
@@ -120,7 +120,6 @@ public class AdminController {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
 
-        // Vérifier l'unicité de l'email
         if (request.getEmail() != null && !request.getEmail().equals(client.getEmail())) {
             if (clientRepository.existsByEmail(request.getEmail())) {
                 throw new BusinessException("Cet email est déjà utilisé");
@@ -128,52 +127,153 @@ public class AdminController {
             client.setEmail(request.getEmail().toLowerCase());
         }
 
-        if (request.getNom() != null) {
-            client.setNom(request.getNom());
-        }
-        if (request.getPrenom() != null) {
-            client.setPrenom(request.getPrenom());
-        }
-        if (request.getTelephone() != null) {
-            client.setTelephone(request.getTelephone());
-        }
-        if (request.getRole() != null) {
-            client.setRole(Client.Role.valueOf(request.getRole()));
-        }
-        if (request.getActif() != null) {
-            client.setActif(request.getActif());
-        }
+        if (request.getNom() != null) client.setNom(request.getNom());
+        if (request.getPrenom() != null) client.setPrenom(request.getPrenom());
+        if (request.getTelephone() != null) client.setTelephone(request.getTelephone());
+        if (request.getRole() != null) client.setRole(Client.Role.valueOf(request.getRole()));
+        if (request.getActif() != null) client.setActif(request.getActif());
 
         client = clientRepository.save(client);
-
         return ResponseEntity.ok(AuthResponse.UserInfo.from(client));
     }
 
-    /**
-     * DELETE /api/admin/users/{id} - Supprimer un utilisateur
-     */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
-
         clientRepository.delete(client);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/users/{id}/reset-password")
+    public ResponseEntity<Void> resetPassword(@PathVariable String id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+        String defaultPassword = "password123";
+        client.setMotDePasse(passwordEncoder.encode(defaultPassword));
+        clientRepository.save(client);
+        return ResponseEntity.ok().build();
+    }
+
+    // ============================================
+    // RÉSERVATIONS (CRUD)
+    // ============================================
+
+    /**
+     * GET /api/admin/reservations - Liste toutes les réservations (paginated)
+     */
+    @GetMapping("/reservations")
+    public ResponseEntity<Page<ReservationResponse>> getAllReservations(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+
+        Page<ReservationResponse> reservations = reservationRepository.findAll(pageable)
+                .map(ReservationResponse::from);
+
+        return ResponseEntity.ok(reservations);
+    }
+
+    /**
+     * GET /api/admin/reservations/all - Liste toutes les réservations (sans pagination)
+     */
+    @GetMapping("/reservations/all")
+    public ResponseEntity<List<ReservationResponse>> getAllReservationsList() {
+        List<ReservationResponse> reservations = reservationRepository.findAll()
+                .stream()
+                .map(ReservationResponse::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(reservations);
+    }
+
+    /**
+     * GET /api/admin/reservations/{id} - Détails d'une réservation
+     */
+    @GetMapping("/reservations/{id}")
+    public ResponseEntity<ReservationResponse> getReservationById(@PathVariable String id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Réservation non trouvée"));
+
+        return ResponseEntity.ok(ReservationResponse.from(reservation));
+    }
+
+    /**
+     * PUT /api/admin/reservations/{id} - Modifier une réservation
+     */
+    @PutMapping("/reservations/{id}")
+    public ResponseEntity<ReservationResponse> updateReservation(
+            @PathVariable String id,
+            @RequestBody AdminUpdateReservationRequest request) {
+
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Réservation non trouvée"));
+
+        if (request.getStatut() != null) {
+            reservation.setStatut(Reservation.StatutReservation.valueOf(request.getStatut()));
+        }
+
+        if (request.getStatutPaiement() != null) {
+            reservation.setStatutPaiement(Reservation.StatutPaiement.valueOf(request.getStatutPaiement()));
+        }
+
+        if (request.getNotes() != null) {
+            reservation.setNotes(request.getNotes());
+        }
+
+        reservation = reservationRepository.save(reservation);
+
+        return ResponseEntity.ok(ReservationResponse.from(reservation));
+    }
+
+    /**
+     * DELETE /api/admin/reservations/{id} - Supprimer une réservation
+     */
+    @DeleteMapping("/reservations/{id}")
+    public ResponseEntity<Void> deleteReservation(@PathVariable String id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Réservation non trouvée"));
+
+        reservationRepository.delete(reservation);
 
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * POST /api/admin/users/{id}/reset-password - Réinitialiser le mot de passe
+     * GET /api/admin/reservations/stats/status - Statistiques des réservations par statut
      */
-    @PostMapping("/users/{id}/reset-password")
-    public ResponseEntity<Void> resetPassword(@PathVariable String id) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
+    @GetMapping("/reservations/stats/status")
+    public ResponseEntity<Map<String, Long>> getReservationStatsByStatus() {
+        List<Object[]> stats = reservationRepository.getStatistiquesParStatut();
 
-        String defaultPassword = "password123";
-        client.setMotDePasse(passwordEncoder.encode(defaultPassword));
-        clientRepository.save(client);
+        Map<String, Long> statusStats = stats.stream()
+                .collect(Collectors.toMap(
+                        s -> (String) s[0],
+                        s -> (Long) s[1]
+                ));
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(statusStats);
+    }
+
+    /**
+     * GET /api/admin/reservations/filter - Filtrer les réservations
+     */
+    @GetMapping("/reservations/filter")
+    public ResponseEntity<Page<ReservationResponse>> filterReservations(
+            @RequestParam(required = false) String statut,
+            @RequestParam(required = false) String statutPaiement,
+            @RequestParam(required = false) String clientEmail,
+            @RequestParam(required = false) LocalDateTime dateDebut,
+            @RequestParam(required = false) LocalDateTime dateFin,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+
+        Page<Reservation> reservations;
+
+        if (statut != null || statutPaiement != null || clientEmail != null || dateDebut != null || dateFin != null) {
+            reservations = reservationRepository.findWithFilters(
+                    statut, statutPaiement, clientEmail, dateDebut, dateFin, pageable);
+        } else {
+            reservations = reservationRepository.findAll(pageable);
+        }
+
+        return ResponseEntity.ok(reservations.map(ReservationResponse::from));
     }
 }

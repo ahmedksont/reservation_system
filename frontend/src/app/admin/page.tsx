@@ -493,9 +493,367 @@ function UsersTable() {
   );
 }
 
+
+// ─── Reservations Table ────────────────────────────────────────────
+// ─── Reservations Table avec QR Code ────────────────────────────
+function ReservationsTable() {
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<any | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPayment, setFilterPayment] = useState("all");
+  const [formData, setFormData] = useState({
+    statut: "",
+    statutPaiement: "",
+    notes: "",
+  });
+
+  const fetchReservations = async () => {
+    try {
+      setLoading(true);
+      const { data } = await adminApi.getReservations();
+      setReservations(data.content || []);
+    } catch (error) {
+      console.error("Error fetching reservations:", error);
+      toast.error("Erreur chargement réservations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReservations();
+  }, []);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await adminApi.updateReservation(editingReservation.id, {
+        statut: formData.statut,
+        statutPaiement: formData.statutPaiement,
+        notes: formData.notes,
+      });
+      toast.success("Réservation modifiée");
+      setModalOpen(false);
+      setEditingReservation(null);
+      fetchReservations();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erreur");
+    }
+  };
+
+  const deleteReservation = async (id: string) => {
+    if (!confirm("Supprimer définitivement cette réservation ? Cette action est irréversible.")) return;
+    try {
+      await adminApi.deleteReservation(id);
+      toast.success("Réservation supprimée");
+      fetchReservations();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erreur suppression");
+    }
+  };
+
+  const openEditModal = (reservation: any) => {
+    setEditingReservation(reservation);
+    setFormData({
+      statut: reservation.statut,
+      statutPaiement: reservation.statutPaiement,
+      notes: reservation.notes || "",
+    });
+    setModalOpen(true);
+  };
+
+  const openQrModal = (reservation: any) => {
+    setSelectedReservation(reservation);
+    setQrModalOpen(true);
+  };
+
+  const getStatusColor = (statut: string) => {
+    const colors = STATUT_COLORS[statut] || STATUT_COLORS.EN_ATTENTE;
+    return colors;
+  };
+
+  const getPaymentColor = (statut: string) => {
+    switch (statut) {
+      case "PAYE": return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" };
+      case "EN_ATTENTE": return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" };
+      case "REMBOURSE": return { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" };
+      case "ECHOUE": return { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" };
+      default: return { bg: "bg-stone-50", text: "text-stone-700", border: "border-stone-200" };
+    }
+  };
+
+  const generateQRCodeUrl = (reservationId: string) => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      `${window.location.origin}/reservations/${reservationId}`
+    )}`;
+  };
+
+  const filteredReservations = reservations.filter((r) => {
+    const matchesSearch = r.client?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.client?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.client?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.id?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === "all" || r.statut === filterStatus;
+    const matchesPayment = filterPayment === "all" || r.statutPaiement === filterPayment;
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <div>
+          <h2 className="font-serif text-2xl text-stone-900">Gestion des réservations</h2>
+          <p className="text-stone-500 text-sm mt-1">Gérer toutes les réservations clients</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+          <input
+            type="text"
+            placeholder="Rechercher par client, email, ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+        >
+          <option value="all">Tous les statuts</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="CONFIRMEE">Confirmée</option>
+          <option value="ANNULEE">Annulée</option>
+          <option value="TERMINEE">Terminée</option>
+        </select>
+        <select
+          value={filterPayment}
+          onChange={(e) => setFilterPayment(e.target.value)}
+          className="px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+        >
+          <option value="all">Tous les paiements</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="PAYE">Payé</option>
+          <option value="REMBOURSE">Remboursé</option>
+          <option value="ECHOUE">Échoué</option>
+        </select>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1100px]">
+            <thead className="bg-stone-50 border-b border-stone-100">
+              <tr className="text-left">
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">ID</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Client</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Type</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Détails</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Montant</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Statut</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Paiement</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Date</th>
+                <th className="p-4 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReservations.map((res) => {
+                const statusColors = getStatusColor(res.statut);
+                const paymentColors = getPaymentColor(res.statutPaiement);
+                const type = res.lignes?.[0]?.chambre ? "CHAMBRE" : res.lignes?.[0]?.trajet ? "TRAJET" : "-";
+                const details = res.lignes?.[0]?.chambre 
+                  ? `Chambre ${res.lignes[0].chambre.numero}`
+                  : res.lignes?.[0]?.trajet 
+                    ? `${res.lignes[0].trajet.lieuDepart} → ${res.lignes[0].trajet.lieuArrivee}`
+                    : "-";
+                
+                return (
+                  <tr key={res.id} className="border-t border-stone-100 hover:bg-stone-50/50 transition">
+                    <td className="p-4 font-mono text-xs text-stone-600">
+                      {res.id?.slice(0, 8).toUpperCase()}
+                    </td>
+                    <td className="p-4">
+                      <div>
+                        <p className="text-stone-900 font-medium">{res.client?.prenom} {res.client?.nom}</p>
+                        <p className="text-stone-400 text-xs">{res.client?.email}</p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                        type === "CHAMBRE" 
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-sky-50 text-sky-700 border border-sky-200"
+                      }`}>
+                        {type === "CHAMBRE" ? <Hotel size={12} /> : <Plane size={12} />}
+                        {type}
+                      </span>
+                    </td>
+                    <td className="p-4 text-stone-600 text-sm">{details}</td>
+                    <td className="p-4 font-semibold text-stone-900 tabular-nums">
+                      {res.montantTotal} TND
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium border ${statusColors.bg} ${statusColors.text} ${statusColors.border}`}>
+                        {res.statut === "EN_ATTENTE" ? "En attente" : 
+                         res.statut === "CONFIRMEE" ? "Confirmée" :
+                         res.statut === "ANNULEE" ? "Annulée" : "Terminée"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium border ${paymentColors.bg} ${paymentColors.text} ${paymentColors.border}`}>
+                        {res.statutPaiement === "EN_ATTENTE" ? "En attente" :
+                         res.statutPaiement === "PAYE" ? "Payé" :
+                         res.statutPaiement === "REMBOURSE" ? "Remboursé" : "Échoué"}
+                      </span>
+                    </td>
+                    <td className="p-4 text-stone-500 text-xs">
+                      {new Date(res.createdAt).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openQrModal(res)}
+                          className="w-9 h-9 rounded-xl border border-stone-200 hover:border-amber-300 text-stone-500 hover:text-amber-600 transition flex items-center justify-center active:scale-95"
+                          title="QR Code"
+                        >
+                          <QrCode size={16} />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(res)}
+                          className="w-9 h-9 rounded-xl border border-stone-200 hover:border-amber-300 text-stone-500 hover:text-amber-600 transition flex items-center justify-center active:scale-95"
+                          title="Modifier"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => deleteReservation(res.id)}
+                          className="w-9 h-9 rounded-xl border border-stone-200 hover:border-red-300 text-stone-500 hover:text-red-600 transition flex items-center justify-center active:scale-95"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!loading && filteredReservations.length === 0 && (
+          <div className="p-10 text-center text-stone-500 text-sm">
+            Aucune réservation trouvée
+          </div>
+        )}
+      </div>
+
+      {/* Edit Reservation Modal */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Modifier la réservation">
+        <form onSubmit={handleUpdate} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Statut</label>
+            <select
+              value={formData.statut}
+              onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+            >
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="CONFIRMEE">Confirmée</option>
+              <option value="ANNULEE">Annulée</option>
+              <option value="TERMINEE">Terminée</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Statut paiement</label>
+            <select
+              value={formData.statutPaiement}
+              onChange={(e) => setFormData({ ...formData, statutPaiement: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+            >
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="PAYE">Payé</option>
+              <option value="REMBOURSE">Remboursé</option>
+              <option value="ECHOUE">Échoué</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"
+              placeholder="Notes internes..."
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all active:scale-[0.98]"
+            >
+              Enregistrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl bg-stone-50 text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-100 transition-all active:scale-[0.98]"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* QR Code Modal */}
+      <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="QR Code de réservation">
+        {selectedReservation && (
+          <div className="text-center space-y-6">
+            <div className="bg-white p-6 rounded-2xl inline-block mx-auto">
+              <img
+                src={generateQRCodeUrl(selectedReservation.id)}
+                alt={`QR Code réservation ${selectedReservation.id?.slice(0, 8)}`}
+                className="w-64 h-64 mx-auto"
+              />
+            </div>
+            <div>
+              <p className="text-stone-500 text-sm mb-2">Scannez ce code pour accéder à la réservation</p>
+              <p className="font-mono text-sm text-stone-800 bg-stone-50 p-3 rounded-xl break-all">
+                {`${window.location.origin}/reservations/${selectedReservation.id}`}
+              </p>
+              <div className="mt-4 p-4 bg-amber-50 rounded-xl">
+                <p className="text-amber-800 text-sm font-medium">
+                  Réservation #{selectedReservation.id?.slice(0, 8).toUpperCase()}
+                </p>
+                <p className="text-amber-600 text-xs mt-1">
+                  Client: {selectedReservation.client?.prenom} {selectedReservation.client?.nom}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/reservations/${selectedReservation.id}`);
+                toast.success("Lien copié dans le presse-papier");
+              }}
+              className="px-6 py-2 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition"
+            >
+              Copier le lien
+            </button>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
 // ─── Trajets Table ─────────────────────────────────────────────
 function TrajetsTable() {
-  // ... (gardez votre code existant pour TrajetsTable)
   const [trajets, setTrajets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -840,7 +1198,7 @@ export default function AdminDashboard() {
             {activeTab === "trajets" && <TrajetsTable />}
             {activeTab === "chambres" && <ChambresTable />}
             {activeTab === "clients" && <UsersTable />}
-            {activeTab === "reservations" && <div className="text-stone-500 text-sm text-center py-8">Gestion des réservations à venir</div>}
+            {activeTab === "reservations" && <ReservationsTable />}
             {activeTab === "scanner" && <QRScanner />}
           </div>
         </div>

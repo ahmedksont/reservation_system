@@ -67,4 +67,30 @@ public interface ReservationRepository extends JpaRepository<Reservation, String
         ORDER BY MONTH(r.createdAt)
     """)
     List<Object[]> getRevenusParMois(@Param("debut") LocalDateTime debut);
+
+
+    /**
+     * Recherche avec filtres
+     */
+    @Query("""
+    SELECT DISTINCT r FROM Reservation r
+    LEFT JOIN FETCH r.client
+    LEFT JOIN FETCH r.lignes l
+    LEFT JOIN FETCH l.chambre
+    LEFT JOIN FETCH l.trajet
+    WHERE (:statut IS NULL OR r.statut = :statut)
+    AND (:statutPaiement IS NULL OR r.statutPaiement = :statutPaiement)
+    AND (:clientEmail IS NULL OR LOWER(r.client.email) LIKE LOWER(CONCAT('%', :clientEmail, '%')))
+    AND (:dateDebut IS NULL OR r.createdAt >= :dateDebut)
+    AND (:dateFin IS NULL OR r.createdAt <= :dateFin)
+    ORDER BY r.createdAt DESC
+""")
+    Page<Reservation> findWithFilters(
+            @Param("statut") String statut,
+            @Param("statutPaiement") String statutPaiement,
+            @Param("clientEmail") String clientEmail,
+            @Param("dateDebut") LocalDateTime dateDebut,
+            @Param("dateFin") LocalDateTime dateFin,
+            Pageable pageable
+    );
 }
