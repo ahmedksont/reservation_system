@@ -40,11 +40,17 @@ import {
   UserX,
   Lock,
   QrCode,
-  Camera
+  Camera,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Bell,
+  Menu
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import QRScanner from "@/components/admin/QRScanner";
+import CalendarView from "@/components/admin/CalendarView";
 import { adminApi, userApi } from "@/lib/api";
 import type { AdminStats, Chambre, Trajet, } from "@/types";
 import toast from "react-hot-toast";
@@ -852,6 +858,7 @@ function ReservationsTable() {
     </div>
   );
 } 
+
 // ─── Trajets Table ─────────────────────────────────────────────
 function TrajetsTable() {
   const [trajets, setTrajets] = useState<any[]>([]);
@@ -1045,7 +1052,6 @@ function TrajetsTable() {
 
 // ─── Chambres Table ────────────────────────────────────────────
 function ChambresTable() {
-  // ... (gardez votre code existant pour ChambresTable - je le raccourcis pour lisibilité)
   const [chambres, setChambres] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1102,8 +1108,33 @@ function ChambresTable() {
             <div><label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">URL Image</label><input type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm" placeholder="https://..." /></div>
           </div>
           <div><label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Description</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm" /></div>
-          <div><label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Équipements</label><div className="flex gap-2 mb-3"><select value={equipementInput} onChange={(e) => setEquipementInput(e.target.value)} className="flex-1 px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm"><option value="">Sélectionner un équipement</option>{availableEquipments.map(e => <option key={e} value={e}>{e}</option>)}</select><button type="button" onClick={addEquipement} className="px-4 py-2.5 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 transition text-sm font-medium active:scale-95">Ajouter</button></div><div className="flex flex-wrap gap-2">{formData.equipements.map(equip => <span key={equip} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 text-sm">{equip === "WiFi" && <Wifi size={12} />}{equip === "TV" && <Tv size={12} />}{equip === "Climatisation" && <Wind size={12} />}{equip === "Mini-bar" && <Coffee size={12} />}{equip === "Baignoire" && <Bath size={12} />}{equip}<button type="button" onClick={() => removeEquipement(equip)} className="hover:text-red-500 ml-0.5 transition"><X size={12} /></button></span>)}</div></div>
-          <div className="flex gap-3 pt-4"><button type="submit" className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all active:scale-[0.98]">{editingChambre ? "Modifier" : "Créer"}</button><button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl bg-stone-50 text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-100 transition-all active:scale-[0.98]">Annuler</button></div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Équipements</label>
+            <div className="flex gap-2 mb-3">
+              <select value={equipementInput} onChange={(e) => setEquipementInput(e.target.value)} className="flex-1 px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none transition text-sm">
+                <option value="">Sélectionner un équipement</option>
+                {availableEquipments.map(e => <option key={e} value={e}>{e}</option>)}
+              </select>
+              <button type="button" onClick={addEquipement} className="px-4 py-2.5 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 transition text-sm font-medium active:scale-95">Ajouter</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.equipements.map(equip => (
+                <span key={equip} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 text-sm">
+                  {equip === "WiFi" && <Wifi size={12} />}
+                  {equip === "TV" && <Tv size={12} />}
+                  {equip === "Climatisation" && <Wind size={12} />}
+                  {equip === "Mini-bar" && <Coffee size={12} />}
+                  {equip === "Baignoire" && <Bath size={12} />}
+                  {equip}
+                  <button type="button" onClick={() => removeEquipement(equip)} className="hover:text-red-500 ml-0.5 transition"><X size={12} /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button type="submit" className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all active:scale-[0.98]">{editingChambre ? "Modifier" : "Créer"}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl bg-stone-50 text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-100 transition-all active:scale-[0.98]">Annuler</button>
+          </div>
         </form>
       </Modal>
     </div>
@@ -1120,9 +1151,13 @@ function StatCard({ icon: Icon, label, value, sub, color, index }: {
   index: number;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.07 }} className="bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300 relative overflow-hidden">
+    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.07 }} className="bg-white rounded-3xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-[0.03]" style={{ background: color }} />
-      <div className="flex items-start justify-between mb-4"><div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-stone-50 border border-stone-200`}><Icon size={20} className="text-stone-600" /></div></div>
+      <div className="flex items-start justify-between mb-4">
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-stone-50 border border-stone-200`}>
+          <Icon size={20} className="text-stone-600" />
+        </div>
+      </div>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-1">{label}</p>
       <p className="font-serif text-3xl font-semibold text-stone-900">{value}</p>
       {sub && <p className="text-stone-500 text-xs mt-1">{sub}</p>}
@@ -1132,11 +1167,22 @@ function StatCard({ icon: Icon, label, value, sub, color, index }: {
 
 // ─── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "trajets" | "chambres" | "reservations" | "clients" | "scanner">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "trajets" | "chambres" | "reservations" | "clients" | "scanner" | "calendar">("overview");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const menuItems = [
+    { id: "overview", label: "Aperçu", icon: LayoutDashboard },
+    { id: "calendar", label: "Calendrier", icon: Calendar },
+    { id: "reservations", label: "Réservations", icon: Bell },
+    { id: "scanner", label: "Scanner QR", icon: QrCode },
+    { id: "chambres", label: "Chambres", icon: Hotel },
+    { id: "trajets", label: "Trajets", icon: Bus },
+    { id: "clients", label: "Utilisateurs", icon: Users },
+  ];
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (mounted && user?.role === "ADMIN") { fetchStats(); } }, [mounted, user]);
@@ -1157,52 +1203,209 @@ export default function AdminDashboard() {
   const maxRevenu = stats ? Math.max(...stats.revenusMensuels.map((r) => r.revenu)) : 1;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-stone-800">
-      <Navbar />
-      <div className="pt-28 pb-16 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-10 flex-wrap gap-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3 block">Administration</span>
-            <h1 className="font-serif text-4xl md:text-5xl font-light text-stone-900 leading-tight">Dashboard <span className="italic text-amber-800">Admin</span></h1>
-          </motion.div>
-          <button onClick={fetchStats} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-stone-700 text-sm font-medium border border-stone-200 hover:bg-stone-50 transition-all active:scale-[0.98]"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Actualiser</button>
-        </div>
+    <div className="min-h-screen bg-[#FDFDFC] text-stone-800 flex">
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-stone-200/60 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="h-full flex flex-col">
+          <div className="p-8">
+            <h2 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
+              LUXURY<span className="text-amber-700/60 italic font-light">Admin</span>
+            </h2>
+          </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-white rounded-2xl border border-stone-200/80 h-36 animate-pulse" />) : statCards.map((s, i) => <StatCard key={s.label} {...s} index={i} />)}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300">
-            <div className="flex items-center justify-between mb-6"><h3 className="font-serif text-xl text-stone-900 flex items-center gap-2"><BarChart3 size={18} className="text-amber-600" /> Revenus mensuels</h3></div>
-            {stats && (<div className="flex items-end gap-3 h-48">{stats.revenusMensuels.map((r, i) => (<div key={r.mois} className="flex-1 flex flex-col items-center gap-2"><motion.div initial={{ height: 0 }} animate={{ height: `${(r.revenu / maxRevenu) * 100}%` }} transition={{ delay: 0.4 + i * 0.05, duration: 0.5, ease: "easeOut" }} className="w-full rounded-t-lg min-h-[4px]" style={{ background: "linear-gradient(180deg, #d97706, #b45309)" }} /><span className="text-stone-400 text-xs">{mois[r.mois - 1]}</span></div>))}</div>)}
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white rounded-2xl border border-stone-200/80 p-6 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300">
-            <h3 className="font-serif text-xl text-stone-900 mb-6">Statuts réservations</h3>
-            {stats && (<div className="space-y-4">{stats.repartitionStatuts.map(({ statut, count }) => { const total = stats.repartitionStatuts.reduce((a, s) => a + s.count, 0); const pct = Math.round((count / total) * 100); const colors = STATUT_COLORS[statut] || STATUT_COLORS.EN_ATTENTE; return (<div key={statut}><div className="flex justify-between text-sm mb-1.5"><span className="text-stone-700 font-medium">{statut}</span><span className="text-stone-500">{count} ({pct}%)</span></div><div className="h-2 bg-stone-100 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ delay: 0.5, duration: 0.6 }} className={`h-full rounded-full`} style={{ backgroundColor: statut === "CONFIRMEE" ? "#10b981" : statut === "EN_ATTENTE" ? "#f59e0b" : "#ef4444" }} /></div></div>); })}</div>)}
-          </motion.div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-stone-200/80 hover:shadow-lg hover:shadow-stone-900/5 hover:border-stone-300 transition-all duration-300">
-          <div className="flex border-b border-stone-100 overflow-x-auto">
-            {(["overview", "trajets", "chambres", "clients", "reservations", "scanner"] as const).map((t) => (
-              <button key={t} onClick={() => setActiveTab(t)} className={`relative px-6 py-4 text-sm font-medium capitalize transition-all whitespace-nowrap ${activeTab === t ? "text-amber-700" : "text-stone-500 hover:text-stone-700"}`}>
-                {t === "overview" ? "Aperçu" : t === "trajets" ? "Trajets" : t === "chambres" ? "Chambres" : t === "clients" ? "Utilisateurs" : t === "reservations" ? "Réservations" : "Scanner QR"}
-                {activeTab === t && <motion.div layoutId="admin-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-600" />}
+          <nav className="flex-1 px-4 space-y-1">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                  activeTab === item.id 
+                    ? "bg-stone-900 text-white shadow-xl shadow-stone-900/10" 
+                    : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
+                }`}
+              >
+                <item.icon size={18} className={activeTab === item.id ? "text-amber-400" : ""} />
+                {item.label}
+                {activeTab === item.id && (
+                  <motion.div layoutId="active-pill" className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
               </button>
             ))}
-          </div>
-          <div className="p-6">
-            {activeTab === "overview" && <div className="text-stone-500 text-sm text-center py-8">Tableau de bord général — Sélectionnez un onglet pour gérer</div>}
-            {activeTab === "trajets" && <TrajetsTable />}
-            {activeTab === "chambres" && <ChambresTable />}
-            {activeTab === "clients" && <UsersTable />}
-            {activeTab === "reservations" && <ReservationsTable />}
-            {activeTab === "scanner" && <QRScanner />}
+          </nav>
+
+          <div className="p-4 mt-auto border-t border-stone-100">
+            <button 
+              onClick={() => logout()}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+            >
+              <LogOut size={18} />
+              Déconnexion
+            </button>
           </div>
         </div>
-      </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 min-h-screen overflow-y-auto bg-[#FDFDFC]">
+        {/* Header Bar */}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200/60 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-stone-500">
+                <Menu size={20} />
+              </button>
+              <h1 className="text-lg font-serif font-medium text-stone-900 capitalize">
+                {menuItems.find(i => i.id === activeTab)?.label}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <button className="relative p-2 text-stone-400 hover:text-stone-900 transition-colors">
+                <Bell size={20} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full border-2 border-white" />
+              </button>
+              <div className="flex items-center gap-3 pl-6 border-l border-stone-200">
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs font-bold text-stone-900 leading-none mb-1">{user?.nom}</p>
+                  <p className="text-[10px] text-stone-400 font-medium uppercase tracking-widest">Administrateur</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600 font-bold">
+                  {user?.nom?.[0]}
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="p-8 max-w-[1600px] mx-auto">
+          {activeTab === "overview" && (
+            <div className="space-y-8">
+              {/* Stat Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-3xl border border-stone-200/60 h-40 animate-pulse" />
+                  ))
+                ) : (
+                  statCards.map((s, i) => <StatCard key={s.label} {...s} index={i} />)
+                )}
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid lg:grid-cols-3 gap-8">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.3 }} 
+                  className="lg:col-span-2 bg-white rounded-3xl border border-stone-200/60 p-8 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="font-serif text-xl text-stone-900">Analyse des Revenus</h3>
+                      <p className="text-stone-400 text-xs mt-1">Performance des 6 derniers mois</p>
+                    </div>
+                    <select className="bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-medium text-stone-600">
+                      <option>Derniers 6 mois</option>
+                      <option>Cette année</option>
+                    </select>
+                  </div>
+                  {stats && (
+                    <div className="flex items-end gap-4 h-64 px-4">
+                      {stats.revenusMensuels.map((r, i) => (
+                        <div key={r.mois} className="flex-1 flex flex-col items-center gap-4 group">
+                          <div className="relative w-full flex flex-col items-center justify-end h-full">
+                            <motion.div 
+                              initial={{ height: 0 }} 
+                              animate={{ height: `${(r.revenu / maxRevenu) * 100}%` }} 
+                              transition={{ delay: 0.4 + i * 0.05, duration: 1, ease: [0.16, 1, 0.3, 1] }} 
+                              className="w-full max-w-[40px] rounded-t-2xl min-h-[8px] bg-stone-900 group-hover:bg-amber-700 transition-colors duration-500"
+                            />
+                            <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-stone-900 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap">
+                              {r.revenu.toLocaleString()} TND
+                            </div>
+                          </div>
+                          <span className="text-stone-400 text-[10px] font-bold uppercase tracking-widest">{mois[r.mois - 1]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.35 }} 
+                  className="bg-white rounded-3xl border border-stone-200/60 p-8 shadow-sm"
+                >
+                  <h3 className="font-serif text-xl text-stone-900 mb-8">Flux de Réservation</h3>
+                  {stats && (
+                    <div className="space-y-6">
+                      {stats.repartitionStatuts.map(({ statut, count }) => { 
+                        const total = stats.repartitionStatuts.reduce((a, s) => a + s.count, 0); 
+                        const pct = Math.round((count / total) * 100); 
+                        const isConfirmed = statut === "CONFIRMEE";
+                        const isPending = statut === "EN_ATTENTE";
+                        
+                        return (
+                          <div key={statut} className="group">
+                            <div className="flex justify-between text-sm mb-2.5">
+                              <span className="text-stone-600 font-medium flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${isConfirmed ? "bg-emerald-500" : isPending ? "bg-amber-500" : "bg-red-500"}`} />
+                                {statut}
+                              </span>
+                              <span className="text-stone-900 font-bold">{count} <span className="text-stone-400 font-normal text-xs ml-1">({pct}%)</span></span>
+                            </div>
+                            <div className="h-2 bg-stone-50 rounded-full overflow-hidden border border-stone-100">
+                              <motion.div 
+                                initial={{ width: 0 }} 
+                                animate={{ width: `${pct}%` }} 
+                                transition={{ delay: 0.5, duration: 0.8 }} 
+                                className={`h-full rounded-full`} 
+                                style={{ backgroundColor: isConfirmed ? "#10b981" : isPending ? "#f59e0b" : "#ef4444" }} 
+                              />
+                            </div>
+                          </div>
+                        ); 
+                      })}
+                      
+                      <div className="mt-12 p-6 bg-stone-50 rounded-2xl border border-stone-100 border-dashed">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-amber-600 shadow-sm">
+                            <TrendingUp size={20} />
+                          </div>
+                          <div>
+                            <p className="text-stone-900 font-bold text-sm">+18.5% croissance</p>
+                            <p className="text-stone-400 text-[10px] uppercase tracking-widest font-medium">Comparé au mois dernier</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === "calendar" && <CalendarView />}
+                {activeTab === "trajets" && <TrajetsTable />}
+                {activeTab === "chambres" && <ChambresTable />}
+                {activeTab === "clients" && <UsersTable />}
+                {activeTab === "reservations" && <ReservationsTable />}
+                {activeTab === "scanner" && <QRScanner />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

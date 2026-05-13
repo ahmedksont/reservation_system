@@ -17,7 +17,7 @@ import {
   RefreshCw,
   Upload
 } from "lucide-react";
-import { reservationApi } from "@/lib/api";
+import { reservationApi, adminApi } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
@@ -102,12 +102,12 @@ export default function QRScanner() {
   const fetchReservation = async (id: string) => {
     setLoading(true);
     try {
-      const { data } = await reservationApi.getById(id);
+      const { data } = await adminApi.getReservationById(id);
       setReservation(data);
-      toast.success("Réservation trouvée");
+      toast.success("Réservation trouvée (Admin)");
     } catch (error: any) {
       console.error("Error fetching reservation:", error);
-      toast.error("Réservation introuvable ou ID invalide");
+      toast.error("Réservation introuvable ou accès refusé");
       setReservation(null);
     } finally {
       setLoading(false);
