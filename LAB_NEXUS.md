@@ -1,7 +1,7 @@
 # LAB_NEXUS.md — Expert Artéfact : Sonatype Nexus Repository Manager
 
 <p align="center">
-  <img src="docs/images/architecture.png" width="850">
+  <img src="docs/images/architecture.png" width="400">
 </p>
 
 > **Étudiant B — Pilier Artéfact**  
