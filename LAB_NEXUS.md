@@ -1,165 +1,246 @@
 # LAB_NEXUS.md — Expert Artéfact : Sonatype Nexus Repository Manager
 
 <p align="center">
-  <img src="docs/images/architecture.png" width="400">
+  <img src="docs/images/architecture.png" width="700">
+</p>
+
+<p align="center">
+<b>Figure 1 — Architecture globale de la plateforme CI/CD</b>
 </p>
 
 > **Étudiant B — Pilier Artéfact**  
-> Environnement : Ubuntu VPS · Docker · Jenkins · Maven · Spring Boot 1.0.1  
+> Environnement : Ubuntu VPS · Docker · Maven · Spring Boot 1.0.1  
 > Documentation officielle : https://help.sonatype.com/en/sonatype-nexus-repository.html
 
 ---
 
-## 1. Le Besoin — Problématique Métier
+# 1. Le Besoin — Problématique Métier
 
-### Pourquoi un dépôt privé d'artéfacts ?
+## Pourquoi un dépôt privé d'artéfacts ?
 
-Dans un projet professionnel, `mvn package` produit un `.jar`. Sans gestionnaire d'artéfacts, ce fichier :
+Dans un projet professionnel, `mvn package` produit un fichier `.jar`.
+Sans gestionnaire d’artéfacts, ce fichier :
 
-- **disparaît** à la prochaine compilation (pas de traçabilité de version),
-- **circule par e-mail ou clé USB** entre les développeurs (pas sécurisé),
-- **est re-téléchargé depuis Internet** à chaque build (lent, fragile, risqué si le dépôt public change).
+- disparaît à la prochaine compilation,
+- circule manuellement entre développeurs,
+- n’est pas centralisé,
+- peut être remplacé ou modifié sans contrôle,
+- dépend d’Internet pour télécharger les dépendances.
 
-Nexus Repository Manager résout ces trois problèmes :
+Sonatype Nexus Repository Manager permet de résoudre ces problèmes.
 
 | Problème sans Nexus | Solution avec Nexus |
 |---|---|
-| Pas de traçabilité des versions livrées | Chaque artefact est immutable, versionné, horodaté |
-| Dépendances publiques re-téléchargées à chaque build | Cache proxy local → builds hors-ligne possibles |
-| Partage de JAR par e-mail/FTP | URL stable, authentification, audit des téléchargements |
-| Vulnérabilités dans les libs publiques non détectées | IQ Server (Nexus Lifecycle) peut bloquer les dépendances à risque |
-
-### Schéma d'ensemble
-
-```
-Développeur / Jenkins
-        │
-        │  mvn deploy
-        ▼
-┌──────────────────────────────────────┐
-│         Nexus Repository Manager     │
-│                                      │
-│  ┌─────────────┐  ┌───────────────┐  │
-│  │   Hosted    │  │     Proxy     │  │
-│  │  (maven-    │  │  (central,    │  │
-│  │  releases)  │  │   jcenter…)   │  │
-│  └─────────────┘  └───────────────┘  │
-│         ▲               │            │
-│         │    ┌──────────┘            │
-│         └────┤   Group               │
-│              │ (maven-public)        │
-│              └───────────────────────┘
-│                        │
-│            Répond aux mvn install     │
-└──────────────────────────────────────┘
-```
+| Pas de traçabilité des versions | Chaque artefact est versionné et horodaté |
+| Rebuilds lents et dépendance Internet | Cache local des dépendances Maven |
+| Partage manuel des JAR | URL centralisée et sécurisée |
+| Difficulté de reproduction des builds | Artéfacts immuables et stockés |
+| Dépendances externes non contrôlées | Proxy Maven Central et gestion des accès |
 
 ---
 
-## 2. Les Concepts Clés
+# 2. Les Concepts Clés
 
-### 2.1 Types de Repositories
+## 2.1 Hosted Repository
 
-| Type | Rôle | Exemple d'usage |
-|------|------|----------------|
-| **Hosted** | Stockage interne des artefacts produits par l'équipe | `maven-releases`, `maven-snapshots` |
-| **Proxy** | Miroir cache d'un dépôt distant (Maven Central, etc.) | `maven-central` |
-| **Group** | Agrège plusieurs repos en une seule URL | `maven-public` |
+Un repository hosted stocke les artéfacts produits par l’équipe.
 
-### 2.2 Formats supportés
+Exemples :
 
-Nexus OSS 3.x supporte nativement : **Maven**, **Docker**, **npm**, **PyPI**, **NuGet**, **Helm**, **Raw**, **Apt**, **Yum**.
+- `maven-releases`
+- `maven-snapshots`
 
-Dans ce lab, nous utilisons le format **Maven 2 (MRM)**.
+Dans ce laboratoire, nous utilisons `maven-releases` afin de publier les versions stables du projet `reservation-system`.
 
-### 2.3 Immuabilité et politique de redéploiement
+---
 
-Un repository `maven-releases` est configuré par défaut avec la politique **Disable Redeploy** : une version `1.0.1` publiée ne peut plus être écrasée. C'est un principe fondamental de traçabilité : *un numéro de version = un artefact figé*.
+## 2.2 Proxy Repository
 
-> 📖 Référence officielle : [Repository Management — Hosted Repositories](https://help.sonatype.com/en/hosted-repositories.html)
+Un repository proxy agit comme un cache d’un dépôt distant.
 
-### 2.4 Coordonnées Maven (GAV)
+Exemple :
 
-Chaque artefact est identifié par un triplet **GAV** :
+- `maven-central`
 
+Avantages :
+
+- accélération des builds,
+- réduction du trafic Internet,
+- disponibilité locale des dépendances.
+
+---
+
+## 2.3 Group Repository
+
+Un group repository regroupe plusieurs repositories sous une seule URL.
+
+Exemple :
+
+- `maven-public`
+
+Cela simplifie la configuration Maven et Jenkins.
+
+---
+
+## 2.4 SNAPSHOT vs RELEASE
+
+| Type | Description |
+|---|---|
+| `1.0.1-SNAPSHOT` | Version de développement modifiable |
+| `1.0.1` | Version stable et immuable |
+
+Le repository `maven-releases` est configuré avec la politique :
+
+```text
+Disable Redeploy
 ```
+
+Une version RELEASE déjà publiée ne peut pas être écrasée.
+
+---
+
+## 2.5 Coordonnées Maven (GAV)
+
+Chaque artefact Maven est identifié par :
+
+```text
 GroupId    : com.reservation
 ArtifactId : reservation-system
 Version    : 1.0.1
 ```
 
-Ce qui donne le chemin dans Nexus :
-`com/reservation/reservation-system/1.0.1/reservation-system-1.0.1.jar`
+Chemin généré dans Nexus :
+
+```text
+com/reservation/reservation-system/1.0.1/
+```
 
 ---
 
-## 3. Mise en Place Technique
+# 3. Mise en Place Technique
 
-### 3.1 Installation — Nexus via Docker
+## 3.1 Déploiement Nexus avec Docker
 
-L'environnement de ce lab utilise Docker. Nexus est lancé avec la commande suivante :
+Le déploiement a été réalisé sur un VPS Ubuntu via Docker.
+
+Commande utilisée :
 
 ```bash
 docker run -d \
   --name nexus \
   -p 8081:8081 \
   -v nexus-data:/nexus-data \
-  sonatype/nexus3:latest
+  sonatype/nexus3
 ```
 
-**Vérification que le conteneur tourne :**
+---
+
+## Vérification des conteneurs Docker
+
+Commande :
 
 ```bash
 docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}"
 ```
 
-Résultat obtenu sur notre VPS :
+<p align="center">
+  <img src="docs/images/dockerps.png" width="900">
+</p>
 
-```
-NAMES     IMAGE                 PORTS
-jenkins   jenkins/jenkins:lts   0.0.0.0:8080->8080/tcp, 50000/tcp
-nexus     sonatype/nexus3       0.0.0.0:8081->8081/tcp
+<p align="center">
+<b>Figure 2 — Vérification des conteneurs Docker</b>
+</p>
+
+---
+
+## Accès à Nexus
+
+URL :
+
+```text
+http://SERVER_IP:8081
 ```
 
-**Récupération du mot de passe initial admin :**
+Récupération du mot de passe initial :
 
 ```bash
 docker exec nexus cat /nexus-data/admin.password
 ```
 
-Se connecter sur `http://localhost:8081` → login `admin` → changer le mot de passe → activer l'accès anonyme en lecture (optionnel selon la politique de sécurité).
+<p align="center">
+  <img src="docs/images/nexus.png" width="850">
+</p>
 
-> 📖 Référence officielle : [Installation — Docker](https://help.sonatype.com/en/docker-container-configuration.html)
+<p align="center">
+<b>Figure 3 — Interface de connexion Nexus</b>
+</p>
 
-### 3.2 Création du Repository Hosted `maven-releases`
+---
 
-Dans l'interface Nexus :
+## 3.2 Création du Repository Hosted `maven-releases`
 
-1. **Administration → Repositories → Create repository**
-2. Choisir le recipe : `maven2 (hosted)`
-3. Paramètres :
-   - **Name** : `maven-releases`
-   - **Version policy** : `Release`
-   - **Deployment policy** : `Disable redeploy`  ← immuabilité
-4. Sauvegarder
+Dans l’interface Nexus :
 
-URL du repository obtenue : `http://localhost:8081/repository/maven-releases/`
+1. Administration → Repositories
+2. Create repository
+3. Choisir `maven2 (hosted)`
+4. Paramètres :
 
-### 3.3 Création d'un utilisateur de déploiement
+| Paramètre | Valeur |
+|---|---|
+| Name | `maven-releases` |
+| Version policy | `Release` |
+| Deployment policy | `Disable redeploy` |
 
-Ne jamais utiliser le compte `admin` dans les pipelines CI.
+URL du repository :
 
-1. **Administration → Security → Users → Create user**
-2. Paramètres :
-   - **User ID** : `jenkins-deployer`
-   - **Password** : `<mot de passe fort>`
-   - **Roles** : `nx-deployment` (ou rôle personnalisé avec `nx-repository-view-maven2-maven-releases-*`)
+```text
+http://SERVER_IP:8081/repository/maven-releases/
+```
 
-> 📖 Référence officielle : [Security — Users and Roles](https://help.sonatype.com/en/roles.html)
+<p align="center">
+  <img src="docs/images/nexusrelease.png" width="900">
+</p>
 
-### 3.4 Configuration Maven (`settings.xml`)
+<p align="center">
+<b>Figure 4 — Repository Maven Hosted</b>
+</p>
 
-Maven a besoin des credentials pour publier. Ce fichier se place dans `~/.m2/settings.xml` sur le serveur Jenkins (ou injecté via Jenkins Credentials) :
+---
+
+## 3.3 Création d’un utilisateur de déploiement
+
+Le compte `admin` ne doit pas être utilisé dans les pipelines CI/CD.
+
+Création d’un utilisateur dédié :
+
+| Paramètre | Valeur |
+|---|---|
+| User ID | `jenkins-deployer` |
+| Password | `********` |
+| Role | `nx-deployment` |
+
+<p align="center">
+  <img src="docs/images/nexususer.png" width="850">
+</p>
+
+<p align="center">
+<b>Figure 5 — Création de l’utilisateur Nexus</b>
+</p>
+
+---
+
+## 3.4 Configuration Maven — settings.xml
+
+Le fichier `settings.xml` permet à Maven d’utiliser les credentials Nexus.
+
+Emplacement :
+
+```text
+~/.m2/settings.xml
+```
+
+Configuration utilisée :
 
 ```xml
 <settings>
@@ -167,272 +248,233 @@ Maven a besoin des credentials pour publier. Ce fichier se place dans `~/.m2/set
     <server>
       <id>nexus-releases</id>
       <username>jenkins-deployer</username>
-      <password>VOTRE_MOT_DE_PASSE</password>
+      <password>********</password>
     </server>
   </servers>
 </settings>
 ```
 
-> L'`<id>nexus-releases</id>` doit correspondre exactement à l'id déclaré dans le `pom.xml`.
+<p align="center">
+  <img src="docs/images/nexussetings.png" width="850">
+</p>
 
-### 3.5 Configuration `pom.xml`
+<p align="center">
+<b>Figure 6 — Configuration Maven settings.xml</b>
+</p>
 
-Le projet doit déclarer la destination de déploiement :
+---
+
+## 3.5 Configuration du pom.xml
+
+Le projet Spring Boot doit déclarer le repository de déploiement.
 
 ```xml
 <distributionManagement>
   <repository>
     <id>nexus-releases</id>
-    <url>http://localhost:8081/repository/maven-releases/</url>
+    <url>http://SERVER_IP:8081/repository/maven-releases/</url>
   </repository>
-  <snapshotRepository>
-    <id>nexus-snapshots</id>
-    <url>http://localhost:8081/repository/maven-snapshots/</url>
-  </snapshotRepository>
 </distributionManagement>
 ```
 
-### 3.6 Credentials Jenkins
+<p align="center">
+  <img src="docs/images/pom.png" width="850">
+</p>
 
-Dans Jenkins (`http://localhost:8080`) :
-
-1. **Manage Jenkins → Credentials → Global → Add Credentials**
-2. Type : **Username with password**
-3. Renseigner :
-   - Username : `jenkins-deployer`
-   - Password : `<mot de passe>`
-   - ID : `nexus-credentials`
-
-Ce credential sera référencé dans le Jenkinsfile via `withCredentials`.
-
-### 3.7 Jenkinsfile — Pipeline de déploiement sur Nexus
-
-```groovy
-pipeline {
-    agent any
-
-    tools {
-        maven 'Maven-3.9'   // Nom configuré dans Jenkins Global Tools
-        jdk   'JDK-17'
-    }
-
-    environment {
-        NEXUS_URL        = 'http://localhost:8081'
-        NEXUS_REPO       = 'maven-releases'
-        ARTIFACT_ID      = 'reservation-system'
-        GROUP_ID         = 'com.reservation'
-    }
-
-    stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build & Test') {
-            steps {
-                dir('backend') {
-                    sh 'mvn clean verify'
-                }
-            }
-            post {
-                always {
-                    junit 'backend/target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            // Pilar A — délégué à l'Étudiant A
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    dir('backend') {
-                        sh 'mvn sonar:sonar'
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Deploy to Nexus') {
-            steps {
-                // Injection du settings.xml avec les credentials Nexus
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'nexus-credentials',
-                        usernameVariable: 'NEXUS_USER',
-                        passwordVariable: 'NEXUS_PASS'
-                    )
-                ]) {
-                    dir('backend') {
-                        sh """
-                            mvn deploy \
-                              -DskipTests \
-                              -Dusername=${NEXUS_USER} \
-                              -Dpassword=${NEXUS_PASS} \
-                              --settings /var/jenkins_home/.m2/settings.xml
-                        """
-                    }
-                }
-            }
-        }
-
-    }
-
-    post {
-        success {
-            echo "✅ Artefact publié sur Nexus : ${NEXUS_URL}/repository/${NEXUS_REPO}/${GROUP_ID.replace('.','/')}/${ARTIFACT_ID}/"
-        }
-        failure {
-            echo "❌ Pipeline échoué. Vérifier le Quality Gate SonarQube ou les logs Maven."
-        }
-    }
-}
-```
-
-**Points clés à expliquer ligne par ligne :**
-
-| Ligne / Bloc | Explication |
-|---|---|
-| `withCredentials` | Injecte les identifiants sans les exposer en clair dans les logs |
-| `-DskipTests` | Les tests ont déjà été exécutés au stage `Build & Test` |
-| `waitForQualityGate abortPipeline: true` | Si SonarQube refuse la qualité, le deploy ne se fait pas |
-| `--settings` | Pointe vers le fichier contenant le `<server>` avec l'id `nexus-releases` |
+<p align="center">
+<b>Figure 7 — Configuration distributionManagement dans pom.xml</b>
+</p>
 
 ---
 
-## 4. Test et Validation
+## 3.6 Build Maven
 
-### 4.1 Preuve de déploiement réussi (logs réels)
+Build du projet backend :
 
-Extrait de la sortie `mvn deploy` exécutée sur notre VPS (`2026-05-15T14:31:44Z`) :
-
+```bash
+cd reservation_system/backend
+mvn clean package
 ```
-Uploading to nexus-releases:
-  http://localhost:8081/repository/maven-releases/com/reservation/reservation-system/1.0.1/reservation-system-1.0.1.pom
-Uploaded to nexus-releases: ... (4.0 kB at 21 kB/s)
 
-Uploading to nexus-releases:
-  http://localhost:8081/repository/maven-releases/com/reservation/reservation-system/1.0.1/reservation-system-1.0.1.jar
-Uploaded to nexus-releases: ... (62 MB at 60 MB/s)
+Résultat obtenu :
 
-Downloading from nexus-releases: .../maven-metadata.xml
-Downloaded from nexus-releases: .../maven-metadata.xml (313 B at 3.2 kB/s)
-Uploading to nexus-releases: .../maven-metadata.xml
-Uploaded to nexus-releases: .../maven-metadata.xml (344 B at 5.8 kB/s)
-
+```text
 [INFO] BUILD SUCCESS
-[INFO] Total time: 3.351 s
-[INFO] Finished at: 2026-05-15T14:31:44Z
 ```
 
-**Ce que ces logs prouvent :**
-1. Le `.pom` (métadonnées) a été uploadé → Nexus connaît les coordonnées GAV.
-2. Le `.jar` (62 MB) a été uploadé → l'artefact binaire est stocké.
-3. Le `maven-metadata.xml` a été mis à jour → Nexus indexe la nouvelle version `1.0.1`.
+L’artefact généré :
 
-### 4.2 Vérification dans l'interface Nexus
-
-Depuis `http://localhost:8081` → **Browse → maven-releases** :
-
+```text
+target/reservation-system-1.0.1.jar
 ```
+
+<p align="center">
+  <img src="docs/images/maven-build-success.png" width="900">
+</p>
+
+<p align="center">
+<b>Figure 8 — Build Maven réussi</b>
+</p>
+
+---
+
+## 3.7 Déploiement de l’artefact dans Nexus
+
+Commande utilisée :
+
+```bash
+mvn deploy -DskipTests
+```
+
+Résultat observé :
+
+```text
+Uploading to nexus-releases...
+Uploaded to nexus-releases...
+[INFO] BUILD SUCCESS
+```
+
+<p align="center">
+  <img src="docs/images/maven-deploy-success.png" width="900">
+</p>
+
+<p align="center">
+<b>Figure 9 — Déploiement Maven réussi</b>
+</p>
+
+---
+
+# 4. Test et Validation
+
+## 4.1 Vérification dans l’interface Nexus
+
+Depuis :
+
+```text
+Browse → maven-releases
+```
+
+Structure obtenue :
+
+```text
 com/
  └── reservation/
       └── reservation-system/
-           ├── maven-metadata.xml
            └── 1.0.1/
-                ├── reservation-system-1.0.1.jar        (62 MB)
-                ├── reservation-system-1.0.1.jar.md5
-                ├── reservation-system-1.0.1.jar.sha1
-                └── reservation-system-1.0.1.pom
 ```
 
-Les fichiers `.md5` et `.sha1` sont générés automatiquement par Nexus pour garantir l'**intégrité** des téléchargements.
+<p align="center">
+  <img src="docs/images/nexus-artifact.png" width="900">
+</p>
 
-### 4.3 Test de récupération de l'artefact
-
-Pour vérifier qu'un autre projet peut consommer l'artefact stocké :
-
-```xml
-<!-- Dans le pom.xml du projet consommateur -->
-<dependency>
-    <groupId>com.reservation</groupId>
-    <artifactId>reservation-system</artifactId>
-    <version>1.0.1</version>
-</dependency>
-
-<repositories>
-    <repository>
-        <id>nexus-releases</id>
-        <url>http://localhost:8081/repository/maven-releases/</url>
-    </repository>
-</repositories>
-```
-
-```bash
-mvn dependency:get \
-  -Dartifact=com.reservation:reservation-system:1.0.1 \
-  -DremoteRepositories=nexus-releases::::http://localhost:8081/repository/maven-releases/
-```
-
-### 4.4 Scénario d'échec — Tentative de re-déploiement
-
-Avec la politique `Disable Redeploy`, tenter de re-publier `1.0.1` retourne :
-
-```
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-deploy-plugin:3.1.1:deploy
-[ERROR] Could not transfer artifact ...
-[ERROR] 400 Repository does not allow updating assets: maven-releases
-```
-
-Ce comportement est **voulu** : il garantit l'immuabilité des releases.  
-La solution est d'incrémenter le numéro de version (`1.0.2`) avant de redéployer.
+<p align="center">
+<b>Figure 10 — Artefact publié dans Nexus</b>
+</p>
 
 ---
 
-## 5. Récapitulatif Architecture Finale
+## 4.2 Ce que les résultats prouvent
 
+Les tests réalisés démontrent :
+
+- Nexus Repository OSS fonctionne correctement,
+- le repository Maven Hosted est opérationnel,
+- Maven peut publier des artefacts sur Nexus,
+- les versions sont stockées et versionnées,
+- le repository est prêt pour une intégration CI/CD.
+
+---
+
+## 4.3 Scénario d’échec — Disable Redeploy
+
+Une tentative de re-déploiement de la version `1.0.1` retourne :
+
+```text
+400 Repository does not allow updating assets
 ```
+
+Ce comportement garantit l’immuabilité des releases.
+
+La solution consiste à incrémenter la version :
+
+```text
+1.0.2
+```
+
+---
+
+# 5. Intégration Jenkins → Nexus (Semaine 2)
+
+Cette partie sera réalisée durant la semaine 2.
+
+Objectif :
+
+1. Build Maven automatique
+2. Analyse SonarQube
+3. Validation du Quality Gate
+4. Publication automatique dans Nexus
+
+Pipeline cible :
+
+```text
 Git Push
-   │
-   ▼
+    ↓
 Jenkins Pipeline
-   ├── [1] Checkout
-   ├── [2] mvn clean verify  ──→  Tests unitaires
-   ├── [3] mvn sonar:sonar   ──→  SonarQube (Étudiant A)
-   ├── [4] Quality Gate      ──→  BLOQUE si code mauvais
-   └── [5] mvn deploy        ──→  Nexus maven-releases
-                                        │
-                             http://localhost:8081/repository/
-                             maven-releases/com/reservation/
-                             reservation-system/1.0.1/
+    ↓
+Build Maven
+    ↓
+Quality Gate SonarQube
+    ↓
+Publish Artifact → Nexus
 ```
 
-Le pipeline **échoue** si :
-- Les tests unitaires échouent (stage 2)
-- Le Quality Gate SonarQube rejette le code (stage 4)
+<p align="center">
+  <img src="docs/images/jenkins-pipeline.png" width="900">
+</p>
 
-Le pipeline **réussit et publie** uniquement si le code passe les deux contrôles.
+<p align="center">
+<b>Figure 11 — Pipeline Jenkins vers Nexus</b>
+</p>
 
 ---
 
-## 6. Références Officielles
+# 6. Sécurité
 
-| Sujet | Lien |
-|-------|------|
-| Documentation principale Nexus 3 | https://help.sonatype.com/en/sonatype-nexus-repository.html |
+Mesures appliquées :
+
+- désactivation des accès anonymes,
+- utilisateur dédié au déploiement,
+- séparation des rôles,
+- credentials Maven stockés dans `settings.xml`,
+- future gestion des secrets via Jenkins Credentials.
+
+---
+
+# 7. Conclusion
+
+Ce laboratoire nous a permis de comprendre le rôle d’un gestionnaire d’artéfacts dans une architecture CI/CD moderne.
+
+Nous avons appris à :
+
+- déployer Nexus Repository OSS,
+- configurer des repositories Maven,
+- gérer des utilisateurs et permissions,
+- générer un artefact Maven,
+- publier un `.jar` dans Nexus,
+- préparer l’intégration Jenkins → Nexus.
+
+Cette étape constitue la base de la chaîne CI/CD qui sera finalisée durant la semaine 2.
+
+---
+
+# 8. Références Officielles
+
+| Sujet | Documentation |
+|---|---|
+| Nexus Repository OSS | https://help.sonatype.com/en/sonatype-nexus-repository.html |
 | Installation Docker | https://help.sonatype.com/en/docker-container-configuration.html |
 | Hosted Repositories | https://help.sonatype.com/en/hosted-repositories.html |
-| Deployment Policies | https://help.sonatype.com/en/repository-management.html |
-| Security — Users & Roles | https://help.sonatype.com/en/roles.html |
-| Maven deploy plugin (Apache) | https://maven.apache.org/plugins/maven-deploy-plugin/ |
-| Jenkins Credentials Binding Plugin | https://plugins.jenkins.io/credentials-binding/ |
+| Maven Deploy Plugin | https://maven.apache.org/plugins/maven-deploy-plugin/ |
+| Jenkins Documentation | https://www.jenkins.io/doc/ |
+| Docker Documentation | https://docs.docker.com/ |
+
