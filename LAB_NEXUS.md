@@ -1,6 +1,8 @@
 # LAB_NEXUS.md — Expert Artéfact : Sonatype Nexus Repository Manager
 
-![Architecture CI/CD](docs/images/architecture.png)
+<p align="center">
+  <img src="docs/images/architecture.png" width="850">
+</p>
 
 > **Étudiant B — Pilier Artéfact**  
 > Environnement : Ubuntu VPS · Docker · Jenkins · Maven · Spring Boot 1.0.1  
