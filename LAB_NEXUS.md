@@ -195,7 +195,7 @@ Dans l’interface Nexus :
 URL du repository :
 
 ```text
-http://SERVER_IP:8081/repository/maven-releases/
+http://SERVER_IP:8081/#browse/browse:maven-releases)
 ```
 
 <p align="center">
@@ -255,7 +255,7 @@ Configuration utilisée :
 ```
 
 <p align="center">
-  <img src="docs/images/nexussetings.png" width="850">
+  <img src="docs/images/mavensetings.png" width="850">
 </p>
 
 <p align="center">
