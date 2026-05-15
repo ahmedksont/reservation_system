@@ -53,6 +53,11 @@ public class ChambreService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ChambreResponse> getchambrefilter(Pageable pageable) {
+        return chambreRepository.getchambrefilter(pageable).map(ChambreResponse::from);
+    }
+
+    @Transactional(readOnly = true)
     public ChambreResponse getById(String id) {
         return chambreRepository.findById(id)
                 .map(ChambreResponse::from)

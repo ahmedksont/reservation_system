@@ -106,8 +106,8 @@ export default function NewReservationPage() {
         reservationData = {
           ...reservationData,
           chambreId: roomId,
-          dateArrivee: dateArrivee,
-          dateDepart: dateDepart,
+          dateArrivee:  dateDepart,
+          dateDepart:dateArrivee,
         };
       } else if (itemType === "trajet") {
         reservationData = {

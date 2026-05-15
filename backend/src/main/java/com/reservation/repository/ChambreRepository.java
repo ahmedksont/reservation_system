@@ -117,6 +117,9 @@ public interface ChambreRepository extends JpaRepository<Chambre, String> {
     @Query("SELECT c FROM Chambre c WHERE c.disponible = true ORDER BY c.prixParNuit ASC")
     Page<Chambre> findAllDisponibles(Pageable pageable);
 
+    @Query("SELECT c FROM Chambre c WHERE c.disponible = true AND c.type= :type AND c.prixParNuit >: price ORDER BY c.prixParNuit ASC")
+    Page<Chambre> getchambrefilter(Pageable pageable);
+    
     /**
      * Recherche par type
      */
