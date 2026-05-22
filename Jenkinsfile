@@ -27,7 +27,7 @@ pipeline {
             steps {
                 dir('backend') {
                     sh """
-                    sonar-scanner \
+                    /opt/sonar-scanner/bin/sonar-scanner \
                     -Dsonar.projectKey=reservation-system \
                     -Dsonar.projectName=reservation-system \
                     -Dsonar.sources=src \
@@ -43,7 +43,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh """
-                    sonar-scanner \
+                    /opt/sonar-scanner/bin/sonar-scanner \
                     -Dsonar.projectKey=reservation-frontend \
                     -Dsonar.projectName=reservation-frontend \
                     -Dsonar.sources=. \
