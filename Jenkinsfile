@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sqp_0204e713580a96d2c79f332336cb11fd05888c48')
+        SONAR_TOKEN = credentials('sonar-token')
     }
 
     stages {
@@ -31,8 +31,9 @@ pipeline {
                     -Dsonar.projectKey=reservation-system \
                     -Dsonar.projectName=reservation-system \
                     -Dsonar.sources=src \
+                    -Dsonar.java.binaries=target/classes \
                     -Dsonar.host.url=http://91.134.240.148:9000 \
-                    -Dsonar.login=${SONAR_TOKEN}
+                    -Dsonar.token=${SONAR_TOKEN}
                     """
                 }
             }
@@ -47,7 +48,7 @@ pipeline {
                     -Dsonar.projectName=reservation-frontend \
                     -Dsonar.sources=. \
                     -Dsonar.host.url=http://91.134.240.148:9000 \
-                    -Dsonar.login=${SONAR_TOKEN}
+                    -Dsonar.token=${SONAR_TOKEN}
                     """
                 }
             }
@@ -70,10 +71,6 @@ pipeline {
 
         failure {
             echo 'Pipeline failed!'
-        }
-
-        always {
-            archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
         }
     }
 }
