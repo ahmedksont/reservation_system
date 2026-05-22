@@ -28,7 +28,7 @@ pipeline {
                 dir('backend') {
                     sh """
                     /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=Reservation System\
+                    -Dsonar.projectKey=spring \
                     -Dsonar.projectName=reservation-system \
                     -Dsonar.sources=src \
                     -Dsonar.java.binaries=target/classes \
