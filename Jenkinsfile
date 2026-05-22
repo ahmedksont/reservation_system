@@ -28,7 +28,7 @@ pipeline {
                 dir('backend') {
                     sh """
                     /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=reservation-system \
+                    -Dsonar.projectKey=Reservation System\
                     -Dsonar.projectName=reservation-system \
                     -Dsonar.sources=src \
                     -Dsonar.java.binaries=target/classes \
@@ -44,7 +44,7 @@ pipeline {
                 dir('frontend') {
                     sh """
                     /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=reservation-frontend \
+                    -Dsonar.projectKey=reservation \
                     -Dsonar.projectName=reservation-frontend \
                     -Dsonar.sources=. \
                     -Dsonar.host.url=http://91.134.240.148:9000 \
