@@ -52,7 +52,7 @@ pipeline {
                 dir('frontend') {
                     sh """
                     /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=reservation \
+                    -Dsonar.projectKey=Front \
                     -Dsonar.projectName=reservation-frontend \
                     -Dsonar.sources=. \
                     -Dsonar.host.url=http://91.134.240.148:9000 \
