@@ -7,14 +7,13 @@ pipeline {
     }
 
     stages {
-          stage('Checkout Source Code') {
+
+        stage('Checkout Source Code') {
             steps {
                 git branch: 'main',
                 url: 'https://github.com/ahmedksont/reservation_system.git'
             }
         }
-
-    
 
         stage('Build Backend') {
             steps {
@@ -40,6 +39,14 @@ pipeline {
             }
         }
 
+        stage('Quality Gate Backend') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Analyze Frontend with SonarQube') {
             steps {
                 dir('frontend') {
@@ -51,6 +58,14 @@ pipeline {
                     -Dsonar.host.url=http://91.134.240.148:9000 \
                     -Dsonar.token=${SONAR_TOKEN}
                     """
+                }
+            }
+        }
+
+        stage('Quality Gate Frontend') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -72,6 +87,10 @@ pipeline {
 
         failure {
             echo 'Pipeline failed!'
+        }
+
+        always {
+            archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
         }
     }
 }
