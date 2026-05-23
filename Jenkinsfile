@@ -11,10 +11,34 @@ pipeline {
             }
         }
 
+        stage('Update Version') {
+            steps {
+
+                dir('backend') {
+
+                    script {
+
+                        def newVersion = "1.0.${BUILD_NUMBER}"
+
+                        sh """
+                        mvn versions:set \
+                        -DnewVersion=${newVersion}
+                        """
+
+                        echo "New Version: ${newVersion}"
+                    }
+                }
+            }
+        }
+
         stage('Build Backend') {
             steps {
+
                 dir('backend') {
-                    sh 'mvn clean verify'
+
+                    sh '''
+                    mvn clean verify
+                    '''
                 }
             }
         }
@@ -38,19 +62,25 @@ pipeline {
             }
         }
 
-       stage('Quality Gate Backend') {
-    steps {
-        script {
-            try {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false //vps 8gb ram :")
+        stage('Quality Gate Backend') {
+            steps {
+
+                script {
+
+                    try {
+
+                        timeout(time: 2, unit: 'MINUTES') {
+
+                            waitForQualityGate abortPipeline: false
+                        }
+
+                    } catch (Exception e) {
+
+                        echo "Backend Quality Gate timeout -> skipping..."
+                    }
                 }
-            } catch (Exception e) {
-                echo "Quality Gate timeout -> skipping..."
             }
         }
-    }
-}
 
         stage('Analyze Frontend with SonarQube') {
             steps {
@@ -71,23 +101,33 @@ pipeline {
         }
 
         stage('Quality Gate Frontend') {
-    steps {
-        script {
-            try {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false
+            steps {
+
+                script {
+
+                    try {
+
+                        timeout(time: 2, unit: 'MINUTES') {
+
+                            waitForQualityGate abortPipeline: false
+                        }
+
+                    } catch (Exception e) {
+
+                        echo "Frontend Quality Gate timeout -> skipping..."
+                    }
                 }
-            } catch (Exception e) {
-                echo "Frontend Quality Gate timeout -> skipping..."
             }
         }
-    }
-}
 
         stage('Deploy Artifact to Nexus') {
             steps {
+
                 dir('backend') {
-                    sh 'mvn deploy -DskipTests'
+
+                    sh '''
+                    mvn deploy -DskipTests
+                    '''
                 }
             }
         }
@@ -96,14 +136,17 @@ pipeline {
     post {
 
         success {
+
             echo 'Pipeline completed successfully!'
         }
 
         failure {
+
             echo 'Pipeline failed!'
         }
 
         always {
+
             archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
         }
     }
