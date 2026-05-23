@@ -2,10 +2,6 @@ pipeline {
 
     agent any
 
-    environment {
-        SONAR_TOKEN = credentials('sonar-token')
-    }
-
     stages {
 
         stage('Checkout Source Code') {
@@ -25,16 +21,19 @@ pipeline {
 
         stage('Analyze Backend with SonarQube') {
             steps {
+
                 dir('backend') {
-                    sh """
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=spring \
-                    -Dsonar.projectName=reservation-system \
-                    -Dsonar.sources=src \
-                    -Dsonar.java.binaries=target/classes \
-                    -Dsonar.host.url=http://91.134.240.148:9000 \
-                    -Dsonar.token=${SONAR_TOKEN}
-                    """
+
+                    withSonarQubeEnv('SonarQube') {
+
+                        sh '''
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                        -Dsonar.projectKey=spring \
+                        -Dsonar.projectName=reservation-system \
+                        -Dsonar.sources=src \
+                        -Dsonar.java.binaries=target/classes
+                        '''
+                    }
                 }
             }
         }
@@ -49,15 +48,18 @@ pipeline {
 
         stage('Analyze Frontend with SonarQube') {
             steps {
+
                 dir('frontend') {
-                    sh """
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=Front \
-                    -Dsonar.projectName=reservation-frontend \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=http://91.134.240.148:9000 \
-                    -Dsonar.token=${SONAR_TOKEN}
-                    """
+
+                    withSonarQubeEnv('SonarQube') {
+
+                        sh '''
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                        -Dsonar.projectKey=Front \
+                        -Dsonar.projectName=reservation-frontend \
+                        -Dsonar.sources=.
+                        '''
+                    }
                 }
             }
         }
