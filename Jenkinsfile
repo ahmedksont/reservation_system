@@ -7,6 +7,12 @@ pipeline {
     }
 
     stages {
+          stage('Checkout Source Code') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/ahmedksont/reservation_system.git'
+            }
+        }
 
     
 
